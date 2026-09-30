@@ -16,7 +16,9 @@ import { ContractsModule } from './modules/contracts/contracts.module';
 import { CreditModule } from './modules/credit/credit.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { HealthModule } from './modules/health/health.module';
+import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 import { ProductsModule } from './modules/products/products.module';
 import { SalesModule } from './modules/sales/sales.module';
 import { StoresModule } from './modules/stores/stores.module';
@@ -40,6 +42,8 @@ loadRootEnv();
     SalesModule,
     CreditModule,
     ContractsModule,
+    PaymentsModule,
+    IntegrationsModule,
     AuditLogModule,
   ],
   providers: [
