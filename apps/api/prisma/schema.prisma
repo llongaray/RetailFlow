@@ -1,0 +1,280 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String
+  active       Boolean  @default(true)
+  storeId      String?
+  store        Store?   @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sales             Sale[]            @relation("SaleSeller")
+  cancelledSales    Sale[]            @relation("SaleCanceller")
+  proposals         CreditProposal[]  @relation("ProposalSeller")
+  reviews           CreditProposal[]  @relation("ProposalReviewer")
+  payments          Payment[]         @relation("PaymentRegistrar")
+  refunds           Payment[]         @relation("PaymentRefunder")
+  openedTickets     SupportTicket[]   @relation("TicketOpener")
+  assignedTickets   SupportTicket[]   @relation("TicketAssignee")
+  cancelledContracts Contract[]       @relation("ContractCanceller")
+  auditLogs         AuditLog[]
+
+  @@map("users")
+}
+
+model Store {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  city      String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  users      User[]
+  inventory  Inventory[]
+  sales      Sale[]
+  proposals  CreditProposal[]
+
+  @@map("stores")
+}
+
+model Customer {
+  id          String   @id @default(uuid())
+  name        String
+  cpf         String   @unique
+  email       String?
+  phone       String?
+  creditLimit Decimal  @default(0) @db.Decimal(18, 2)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sales     Sale[]
+  proposals CreditProposal[]
+  tickets   SupportTicket[]
+
+  @@map("customers")
+}
+
+model Product {
+  id          String  @id @default(uuid())
+  sku         String  @unique
+  name        String
+  description String?
+  price       Decimal @db.Decimal(18, 2)
+  active      Boolean @default(true)
+
+  inventory Inventory[]
+  items     SaleItem[]
+
+  @@map("products")
+}
+
+model Inventory {
+  id        String @id @default(uuid())
+  storeId   String
+  productId String
+  quantity  Int
+  store     Store   @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  product   Product @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([storeId, productId])
+  @@map("inventory")
+}
+
+model Sale {
+  id            String    @id @default(uuid())
+  number        Int       @unique @default(autoincrement())
+  storeId       String
+  customerId    String
+  sellerId      String
+  status        String
+  paymentMethod String
+  total         Decimal   @db.Decimal(18, 2)
+  cancelReason  String?   @db.NVarChar(Max)
+  cancelledAt   DateTime?
+  cancelledById String?
+  proposalId    String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  store       Store           @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  customer    Customer        @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  seller      User            @relation("SaleSeller", fields: [sellerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  cancelledBy User?           @relation("SaleCanceller", fields: [cancelledById], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  proposal    CreditProposal? @relation(fields: [proposalId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  items       SaleItem[]
+  payments    Payment[]
+  contract    Contract?
+
+  @@index([storeId, status])
+  @@map("sales")
+}
+
+model SaleItem {
+  id        String  @id @default(uuid())
+  saleId    String
+  productId String
+  quantity  Int
+  unitPrice Decimal @db.Decimal(18, 2)
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  product   Product @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("sale_items")
+}
+
+model CreditProposal {
+  id                         String    @id @default(uuid())
+  customerId                 String
+  storeId                    String
+  sellerId                   String
+  amount                     Decimal   @db.Decimal(18, 2)
+  installments               Int
+  installmentAmount          Decimal   @db.Decimal(18, 2)
+  financedTotal              Decimal   @db.Decimal(18, 2)
+  monthlyInterestRate        Decimal   @db.Decimal(8, 6)
+  status                     String
+  reviewerId                 String?
+  reviewedAt                 DateTime?
+  rejectionReason            String?   @db.NVarChar(Max)
+  additionalPolicyConfirmed  Boolean   @default(false)
+  createdAt                  DateTime  @default(now())
+  updatedAt                  DateTime  @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  store    Store    @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  seller   User     @relation("ProposalSeller", fields: [sellerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  reviewer User?    @relation("ProposalReviewer", fields: [reviewerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sales    Sale[]
+  contract Contract?
+
+  @@index([status])
+  @@map("credit_proposals")
+}
+
+model Contract {
+  id              String    @id @default(uuid())
+  number          Int       @unique @default(autoincrement())
+  proposalId      String    @unique
+  saleId          String    @unique
+  status          String
+  total           Decimal   @db.Decimal(18, 2)
+  installmentCount Int
+  cancelReason    String?   @db.NVarChar(Max)
+  cancelledAt     DateTime?
+  cancelledById   String?
+  createdAt       DateTime  @default(now())
+
+  proposal    CreditProposal @relation(fields: [proposalId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sale        Sale           @relation(fields: [saleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  cancelledBy User?          @relation("ContractCanceller", fields: [cancelledById], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  schedule    Installment[]
+
+  @@map("contracts")
+}
+
+model Installment {
+  id         String   @id @default(uuid())
+  contractId String
+  number     Int
+  amount     Decimal  @db.Decimal(18, 2)
+  dueDate    DateTime
+  status     String
+  contract   Contract @relation(fields: [contractId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  payments   Payment[]
+
+  @@unique([contractId, number])
+  @@map("installments")
+}
+
+model Payment {
+  id                    String   @id @default(uuid())
+  saleId                String?
+  installmentId         String?
+  amount                Decimal  @db.Decimal(18, 2)
+  method                String
+  externalTransactionId String   @unique
+  status                String
+  registeredById        String?
+  refundedById          String?
+  refundReason          String?  @db.NVarChar(Max)
+  createdAt             DateTime @default(now())
+
+  sale         Sale?        @relation(fields: [saleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  installment  Installment? @relation(fields: [installmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  registeredBy User?        @relation("PaymentRegistrar", fields: [registeredById], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  refundedBy   User?        @relation("PaymentRefunder", fields: [refundedById], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("payments")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String
+  oldValue  String?  @db.NVarChar(Max)
+  newValue  String?  @db.NVarChar(Max)
+  ip        String?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([entity, entityId])
+  @@map("audit_logs")
+}
+
+model SupportTicket {
+  id          String   @id @default(uuid())
+  customerId  String
+  openedById  String
+  assigneeId  String?
+  subject     String
+  description String   @db.NVarChar(Max)
+  status      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  openedBy User     @relation("TicketOpener", fields: [openedById], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  assignee User?    @relation("TicketAssignee", fields: [assigneeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("support_tickets")
+}
+
+model CreditPolicy {
+  id                  String  @id @default(uuid())
+  analystLimit        Decimal @db.Decimal(18, 2)
+  managerLimit        Decimal @db.Decimal(18, 2)
+  monthlyInterestRate Decimal @db.Decimal(8, 6)
+  maxInstallments     Int
+  active              Boolean  @default(true)
+  updatedAt           DateTime @default(now()) @updatedAt
+
+  @@map("credit_policies")
+}
+
+model IntegrationJob {
+  id        String   @id @default(uuid())
+  type      String
+  payload   String   @db.NVarChar(Max)
+  status    String
+  attempts  Int      @default(0)
+  lastError String?  @db.NVarChar(Max)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@map("integration_jobs")
+}

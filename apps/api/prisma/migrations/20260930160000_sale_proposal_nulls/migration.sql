@@ -1,0 +1,20 @@
+BEGIN TRY
+
+BEGIN TRAN;
+
+ALTER TABLE [dbo].[sales] DROP CONSTRAINT [sales_proposalId_key];
+
+CREATE UNIQUE NONCLUSTERED INDEX [sales_proposalId_not_null] ON [dbo].[sales]([proposalId]) WHERE [proposalId] IS NOT NULL;
+
+COMMIT TRAN;
+
+END TRY
+BEGIN CATCH
+
+IF @@TRANCOUNT > 0
+BEGIN
+    ROLLBACK TRAN;
+END;
+THROW
+
+END CATCH

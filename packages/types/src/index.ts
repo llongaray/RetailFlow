@@ -1,0 +1,2 @@
+export type UserRole = 'ADMIN' | 'GERENTE' | 'ANALISTA_CREDITO' | 'VENDEDOR' | 'ATENDIMENTO' | 'FINANCEIRO';
+export type CreditProposalStatus = 'DRAFT' | 'SUBMITTED' | 'UNDER_ANALYSIS' | 'APPROVED' | 'REJECTED' | 'CONTRACTED';

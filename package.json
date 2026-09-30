@@ -1,0 +1,32 @@
+{
+  "name": "retailflow",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Plataforma omnichannel de varejo e crédito.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=@retailflow/api",
+    "dev:api": "npm run dev --workspace=@retailflow/api",
+    "dev:web": "npm run dev --workspace=@retailflow/web",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "eslint .",
+    "db:setup": "node scripts/prisma.js migrate deploy && node scripts/prisma.js db seed",
+    "prisma:generate": "node scripts/prisma.js generate"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.0",
+    "@playwright/test": "^1.63.0",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "eslint": "^10.11.0",
+    "typescript-eslint": "^8.71.0",
+    "vite": "^6.0.5",
+    "vue-tsc": "^2.2.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
