@@ -17,10 +17,14 @@ Endereços do ambiente local, os mesmos do `.env.example`. Esta versão não pub
 | GraphQL | http://localhost:3000/api/v1/graphql | POST do consolidado. Se falhar, o painel lê o REST. |
 | Saúde | http://localhost:3000/api/v1/health | Consulta pública. |
 | Métricas | http://localhost:3000/api/v1/metrics | Formato Prometheus. |
+| Webhook Nuvemshop | http://localhost:3000/api/v1/webhooks/nuvemshop | Pedido da loja. Público e idempotente. |
+| Retorno OAuth | http://localhost:3000/api/v1/integrations/nuvemshop/callback | A Nuvemshop devolve o código. Público. |
 | SQL Server | localhost:1433 | Banco `retailflow`, usuário `sa`. |
 | Redis | localhost:6379 | Fila BullMQ. Sem Redis, um agendador interno drena o outbox. |
 
 O parceiro não tem endereço próprio. A mesma API em `http://localhost:3000` atende o header `x-api-key` em catálogo, clientes e vendas.
+
+Com `NUVEMSHOP_MODE=demo`, `MERCADOPAGO_MODE=demo` e `FISCAL_MODE=demo` no `.env.example`, conectar a loja, cobrar e emitir nota não saem para a internet. Trocar esses valores liga o mesmo código na API correspondente.
 
 ## Subir localmente
 
@@ -95,7 +99,7 @@ Este README é o mapa. Cada página abaixo aprofunda um assunto.
 | `docs/design` | Paleta e fontes |
 | `docs/architecture` | Visão técnica |
 | `docs/business-rules` | Regras RN001–RN014 |
-| `docs/images` | Capturas do painel, dos clientes, do ponto de venda, da fila e do contrato |
+| `docs/images` | Capturas do login, do painel, dos clientes, do ponto de venda, da fila e do contrato |
 | `e2e` | Playwright local: venda financiada, menu, listas e admin |
 | `scripts` | Atalho do Prisma com o `.env` da raiz |
 | `.cursor/skills` | Modal, paleta, fontes e ícone no lugar de palavra |
@@ -121,6 +125,8 @@ npx playwright test
 Os testes de integração e o Playwright precisam do SQL Server, da API e do painel no ar. O GitHub Actions roda os testes de domínio, o lint e o build.
 
 ## Imagens
+
+![Entrada do painel, com a foto da loja e o acesso](docs/images/login.png)
 
 ![Painel com cartões, gráfico por loja e pendências](docs/images/painel.png)
 

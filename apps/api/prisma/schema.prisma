@@ -45,6 +45,7 @@ model Store {
   inventory  Inventory[]
   sales      Sale[]
   proposals  CreditProposal[]
+  nuvemshopConnections NuvemshopConnection[]
 
   @@map("stores")
 }
@@ -57,6 +58,7 @@ model Customer {
   phone       String?
   creditLimit Decimal  @default(0) @db.Decimal(18, 2)
   stage       String   @default("ATIVO")
+  source      String   @default("LOJA")
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -64,6 +66,7 @@ model Customer {
   sales     Sale[]
   proposals CreditProposal[]
   tickets   SupportTicket[]
+  charges   Charge[]
 
   @@map("customers")
 }
@@ -106,20 +109,25 @@ model Sale {
   cancelReason  String?   @db.NVarChar(Max)
   cancelledAt   DateTime?
   cancelledById String?
-  proposalId    String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  proposalId      String?
+  channel         String    @default("STORE")
+  externalOrderId String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  store       Store           @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  customer    Customer        @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  seller      User            @relation("SaleSeller", fields: [sellerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  cancelledBy User?           @relation("SaleCanceller", fields: [cancelledById], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  proposal    CreditProposal? @relation(fields: [proposalId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  items       SaleItem[]
-  payments    Payment[]
-  contract    Contract?
+  store            Store             @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  customer         Customer          @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  seller           User              @relation("SaleSeller", fields: [sellerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  cancelledBy      User?             @relation("SaleCanceller", fields: [cancelledById], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  proposal         CreditProposal?   @relation(fields: [proposalId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  items            SaleItem[]
+  payments         Payment[]
+  contract         Contract?
+  charges          Charge[]
+  fiscalDocuments  FiscalDocument[]
 
   @@index([storeId, status])
+  @@index([externalOrderId])
   @@map("sales")
 }
 
@@ -284,10 +292,11 @@ model IntegrationJob {
   type      String
   payload   String   @db.NVarChar(Max)
   status    String
-  attempts  Int      @default(0)
-  lastError String?  @db.NVarChar(Max)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  attempts      Int       @default(0)
+  lastError     String?   @db.NVarChar(Max)
+  nextAttemptAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   @@index([status])
   @@map("integration_jobs")
@@ -300,6 +309,8 @@ model Company {
   logoWide   String?
   logoStory  String?
   updatedAt  DateTime @updatedAt
+
+  nuvemshop NuvemshopConnection?
 
   @@map("companies")
 }
@@ -332,4 +343,116 @@ model PartnerApiKey {
   createdAt DateTime @default(now())
 
   @@map("partner_api_keys")
+}
+
+model NuvemshopConnection {
+  id               String    @id @default(uuid())
+  companyId        String    @unique
+  storeId          String
+  nuvemshopStoreId String
+  accessTokenEnc   String    @db.NVarChar(Max)
+  storeName        String
+  storeEmail       String?
+  storeDomain      String?
+  status           String
+  connectedAt      DateTime  @default(now())
+  lastSyncAt       DateTime?
+  company          Company   @relation(fields: [companyId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  store            Store     @relation(fields: [storeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("nuvemshop_connections")
+}
+
+model ExternalIdentity {
+  id         String   @id @default(uuid())
+  provider   String
+  kind       String
+  externalId String
+  localId    String
+  sku        String?
+  createdAt  DateTime @default(now())
+
+  @@unique([provider, kind, externalId])
+  @@index([localId])
+  @@map("external_identities")
+}
+
+model WebhookEvent {
+  id              String   @id @default(uuid())
+  provider        String
+  externalEventId String
+  event           String
+  payload         String   @db.NVarChar(Max)
+  status          String
+  lastError       String?  @db.NVarChar(Max)
+  createdAt       DateTime @default(now())
+
+  @@unique([provider, externalEventId])
+  @@map("webhook_events")
+}
+
+model PaymentAccount {
+  id             String   @id @default(uuid())
+  provider       String   @unique
+  publicKeyEnc   String?  @db.NVarChar(Max)
+  accessTokenEnc String   @db.NVarChar(Max)
+  active         Boolean  @default(true)
+  updatedAt      DateTime @updatedAt
+
+  @@map("payment_accounts")
+}
+
+model Charge {
+  id         String   @id @default(uuid())
+  customerId String
+  saleId     String?
+  amount     Decimal  @db.Decimal(18, 2)
+  method     String
+  status     String
+  provider   String
+  externalId String   @unique
+  copyPaste  String?  @db.NVarChar(Max)
+  createdAt  DateTime @default(now())
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sale       Sale?    @relation(fields: [saleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("charges")
+}
+
+model FiscalProfile {
+  id                      String   @id @default("company")
+  cnpj                    String
+  legalName               String
+  tradeName               String?
+  stateRegistration       String?
+  municipalRegistration   String?
+  regime                  String
+  ncm                     String
+  cfop                    String
+  csosn                   String
+  cest                    String?
+  serviceCode             String?
+  issRate                 Decimal? @db.Decimal(8, 4)
+  city                    String
+  certificateEnc          String?  @db.NVarChar(Max)
+  certificatePasswordEnc  String?  @db.NVarChar(Max)
+  updatedAt               DateTime @updatedAt
+
+  @@map("fiscal_profiles")
+}
+
+model FiscalDocument {
+  id              String   @id @default(uuid())
+  saleId          String
+  kind            String
+  status          String
+  accessKey       String?
+  number          String?
+  link            String?
+  pushedToChannel Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  sale            Sale     @relation(fields: [saleId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([saleId, kind])
+  @@map("fiscal_documents")
 }

@@ -14,15 +14,18 @@ import { loadRootEnv } from './load-env';
 import { AuditLogModule } from './modules/audit/audit.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { BillingModule } from './modules/billing/billing.module';
 import { CompanyModule } from './modules/company/company.module';
 import { ContractsModule } from './modules/contracts/contracts.module';
 import { CreditModule } from './modules/credit/credit.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { FiscalModule } from './modules/fiscal/fiscal.module';
 import { HealthModule } from './modules/health/health.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { MetricsModule } from './modules/metrics/metrics.module';
+import { NuvemshopModule } from './modules/nuvemshop/nuvemshop.module';
 import { PartnerModule } from './modules/partner/partner.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { ProductsModule } from './modules/products/products.module';
@@ -40,8 +43,10 @@ loadRootEnv();
     PrismaModule,
     AuditModule,
     MetricsModule,
+    NuvemshopModule,
     AuthModule,
     AdminModule,
+    BillingModule,
     CompanyModule,
     PartnerModule,
     HealthModule,
@@ -56,6 +61,7 @@ loadRootEnv();
     PaymentsModule,
     SupportModule,
     DashboardModule,
+    FiscalModule,
     IntegrationsModule,
     AuditLogModule,
   ],

@@ -1,6 +1,8 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Queue, Worker } from 'bullmq';
+import { retryDelayMs, shouldRetry } from '../../domain/channel.rules';
+import { NuvemshopService } from '../../modules/nuvemshop/nuvemshop.service';
 import { PrismaService } from '../database/prisma.service';
 import { OracleLegacyAdapter } from './oracle.adapter';
 
@@ -16,6 +18,7 @@ export class IntegrationService implements OnModuleInit, OnModuleDestroy {
     private readonly prisma: PrismaService,
     private readonly oracle: OracleLegacyAdapter,
     private readonly config: ConfigService,
+    private readonly nuvemshop: NuvemshopService,
   ) {}
 
   async onModuleInit() {
@@ -76,7 +79,12 @@ export class IntegrationService implements OnModuleInit, OnModuleDestroy {
     if (!this.prisma.ready || this.draining) return;
     this.draining = true;
     try {
-      const jobs = await this.prisma.integrationJob.findMany({ where: { status: 'PENDING' }, orderBy: { createdAt: 'asc' }, take: 20 });
+      const now = new Date();
+      const jobs = await this.prisma.integrationJob.findMany({
+        where: { status: 'PENDING', OR: [{ nextAttemptAt: null }, { nextAttemptAt: { lte: now } }] },
+        orderBy: { createdAt: 'asc' },
+        take: 20,
+      });
       for (const job of jobs) {
         const locked = await this.prisma.integrationJob.updateMany({
           where: { id: job.id, status: 'PENDING' },
@@ -84,12 +92,23 @@ export class IntegrationService implements OnModuleInit, OnModuleDestroy {
         });
         if (locked.count === 0) continue;
         try {
-          await this.oracle.sync(job.type, JSON.parse(job.payload));
-          await this.prisma.integrationJob.update({ where: { id: job.id }, data: { status: 'DONE', lastError: null } });
+          const payload = JSON.parse(job.payload) as { webhookEventId?: string };
+          if (job.type === 'NUVEMSHOP_ORDER') await this.nuvemshop.handleJob(payload);
+          else await this.oracle.sync(job.type, payload);
+          await this.prisma.integrationJob.update({ where: { id: job.id }, data: { status: 'DONE', lastError: null, nextAttemptAt: null } });
         } catch (error) {
+          const message = error instanceof Error ? error.message : 'falha na integração';
+          const attempts = job.attempts + 1;
+          if (shouldRetry(job.type, attempts)) {
+            await this.prisma.integrationJob.update({
+              where: { id: job.id },
+              data: { status: 'PENDING', lastError: message, nextAttemptAt: new Date(Date.now() + retryDelayMs(attempts)) },
+            });
+            continue;
+          }
           await this.prisma.integrationJob.update({
             where: { id: job.id },
-            data: { status: 'FAILED', lastError: error instanceof Error ? error.message : 'falha na integração' },
+            data: { status: 'FAILED', lastError: message },
           });
         }
       }

@@ -16,6 +16,7 @@ function presentCustomer(customer: {
   phone: string | null;
   creditLimit: Prisma.Decimal;
   stage: string;
+  source: string;
   active: boolean;
   createdAt: Date;
 }) {
@@ -27,6 +28,7 @@ function presentCustomer(customer: {
     phone: customer.phone,
     creditLimit: asNumber(customer.creditLimit),
     stage: customer.stage,
+    source: customer.source,
     active: customer.active,
     createdAt: customer.createdAt,
   };
@@ -78,9 +80,20 @@ export class CustomersService {
       include: {
         tickets: { orderBy: { createdAt: 'desc' }, take: 20, include: { openedBy: true } },
         sales: { orderBy: { createdAt: 'desc' }, take: 20, include: { store: true } },
+        charges: { orderBy: { createdAt: 'desc' }, take: 10 },
       },
     });
     if (!customer) throw new NotFoundException('Cliente não encontrado.');
+    const sales = customer.sales.map((sale) => ({
+      id: sale.id,
+      number: sale.number,
+      status: sale.status,
+      channel: sale.channel,
+      externalOrderId: sale.externalOrderId,
+      total: asNumber(sale.total),
+      storeName: sale.store.name,
+      createdAt: sale.createdAt,
+    }));
     return {
       ...presentCustomer(customer),
       tickets: customer.tickets.map((ticket) => ({
@@ -91,13 +104,15 @@ export class CustomersService {
         openedBy: ticket.openedBy.name,
         createdAt: ticket.createdAt,
       })),
-      sales: customer.sales.map((sale) => ({
-        id: sale.id,
-        number: sale.number,
-        status: sale.status,
-        total: asNumber(sale.total),
-        storeName: sale.store.name,
-        createdAt: sale.createdAt,
+      sales,
+      externalOrders: sales.filter((sale) => sale.channel === 'NUVEMSHOP'),
+      charges: customer.charges.map((charge) => ({
+        id: charge.id,
+        amount: asNumber(charge.amount),
+        method: charge.method,
+        status: charge.status,
+        copyPaste: charge.copyPaste,
+        createdAt: charge.createdAt,
       })),
     };
   }

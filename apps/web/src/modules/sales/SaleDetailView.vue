@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import Modal from '../../components/Modal.vue';
 import { ApiError, api } from '../../services/http';
@@ -13,6 +13,8 @@ const sale = ref<Sale | null>(null);
 const reason = ref('');
 const externalId = ref('');
 const cancelOpen = ref(false);
+const fiscalOpen = ref(false);
+const fiscalKind = ref<'NFE' | 'NFSE'>('NFE');
 const payOpen = ref(false);
 const payTarget = ref<{ id: string; amount: number; number: number } | null>(null);
 const error = ref('');
@@ -37,6 +39,25 @@ async function contract() {
   await api('/api/v1/contracts', { method: 'POST', body: JSON.stringify({ proposalId: sale.value.proposal.id }) });
   session.notify('Contrato gerado e estoque baixado.');
   await load();
+}
+
+function openFiscal(kind: 'NFE' | 'NFSE') {
+  fiscalKind.value = kind;
+  error.value = '';
+  fiscalOpen.value = true;
+}
+
+async function emitFiscal() {
+  if (!sale.value) return;
+  error.value = '';
+  try {
+    await api('/api/v1/fiscal/documents', { method: 'POST', body: JSON.stringify({ saleId: sale.value.id, kind: fiscalKind.value }) });
+    fiscalOpen.value = false;
+    session.notify(fiscalKind.value === 'NFE' ? 'NF-e autorizada.' : 'NFS-e autorizada.');
+    await load();
+  } catch (cause) {
+    error.value = cause instanceof ApiError ? cause.message : 'Falha ao emitir a nota.';
+  }
 }
 
 function openPay(item: { id: string; amount: number; number: number }) {
@@ -67,6 +88,8 @@ async function pay() {
   }
 }
 
+const canEmit = computed(() => sale.value && sale.value.status !== 'CANCELLED' && sale.value.status !== 'PENDING_CREDIT');
+
 onMounted(load);
 </script>
 
@@ -74,7 +97,7 @@ onMounted(load);
   <header class="topbar" v-if="sale">
     <div>
       <h1>Venda #{{ sale.number }}</h1>
-      <p>{{ sale.customer.name }} · {{ sale.store.name }}</p>
+      <p>{{ sale.customer.name }} · {{ sale.store.name }} · {{ STATUS_LABEL[sale.channel] ?? sale.channel }}</p>
     </div>
     <span class="pill" :data-status="sale.status" data-testid="sale-status">{{ STATUS_LABEL[sale.status] ?? sale.status }}</span>
   </header>
@@ -83,8 +106,15 @@ onMounted(load);
       <p v-for="item in sale.items" :key="item.productId">{{ item.quantity }}× {{ item.name }} · {{ formatBRL(item.unitPrice) }}</p>
       <strong>{{ formatBRL(sale.total) }}</strong>
       <p v-if="sale.proposal">Proposta {{ STATUS_LABEL[sale.proposal.status] }} · {{ sale.proposal.installments }}× {{ formatBRL(sale.proposal.installmentAmount) }}</p>
+      <p v-for="document in sale.documents" :key="document.id">
+        {{ STATUS_LABEL[document.kind] ?? document.kind }} {{ document.accessKey }}
+        <a v-if="document.link" :href="document.link">{{ document.link }}</a>
+        <span v-if="document.pushedToChannel"> · chave enviada ao pedido</span>
+      </p>
       <div class="row">
         <button v-if="sale.proposal?.status === 'APPROVED' && session.can('contract.create')" class="btn primary" data-testid="generate-contract" type="button" @click="contract">Gerar contrato</button>
+        <button v-if="canEmit && session.can('sale.create')" class="btn" type="button" @click="openFiscal('NFE')">Emitir NF-e</button>
+        <button v-if="canEmit && session.can('sale.create')" class="btn" type="button" @click="openFiscal('NFSE')">Emitir NFS-e</button>
         <button v-if="sale.status !== 'CANCELLED' && session.can('sale.cancel')" class="btn danger" type="button" @click="cancelOpen = true">Cancelar venda</button>
       </div>
     </article>
@@ -107,6 +137,17 @@ onMounted(load);
       </table>
     </article>
   </section>
+  <Modal v-model="fiscalOpen">
+    <form class="grid" @submit.prevent="emitFiscal">
+      <h2>{{ fiscalKind === 'NFE' ? 'Emitir NF-e' : 'Emitir NFS-e' }}</h2>
+      <p>Venda #{{ sale?.number }} · {{ formatBRL(sale?.total ?? 0) }}</p>
+      <p v-if="error && fiscalOpen">{{ error }}</p>
+      <div class="row">
+        <button class="btn" type="button" @click="fiscalOpen = false">Voltar</button>
+        <button class="btn primary" type="submit">Emitir</button>
+      </div>
+    </form>
+  </Modal>
   <Modal v-model="payOpen">
     <form class="grid" @submit.prevent="pay">
       <h2>Receber parcela {{ payTarget?.number }}</h2>

@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import type { AuthUser } from '../../common/auth-user';
 import { assertStoreAccess } from '../../common/access';
 import { asNumber } from '../../common/decimal';
+import { assertSaleMethod } from '../../domain/channel.rules';
 import { assertInstallmentCount, buildInstallments } from '../../domain/credit.rules';
 import { DomainError } from '../../domain/domain-error';
 import { assertSufficientStock } from '../../domain/inventory.rules';
@@ -54,8 +55,19 @@ export class SalesService {
     if (!customer?.active) throw new NotFoundException('Cliente não encontrado.');
     const lines = await this.quote(dto.storeId, dto.items);
     const total = roundMoney(lines.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0));
-    if (dto.paymentMethod === 'CASH') return this.completeCash(dto, actor, ip, lines, total);
+    const kind = assertSaleMethod(dto.paymentMethod);
+    const option = await this.prisma.paymentOption.findUnique({ where: { code: dto.paymentMethod } });
+    if (!option?.active) throw new DomainError('PAYMENT', 'Forma de pagamento indisponível.');
+    if (kind === 'IMMEDIATE') return this.completeImmediate(dto, actor, ip, lines, total);
     return this.openFinanced(dto, actor, ip, lines, total);
+  }
+
+  async activePayments() {
+    const order = ['CASH', 'PIX', 'CARD', 'FINANCED'];
+    const options = await this.prisma.paymentOption.findMany({ where: { active: true, code: { in: order } } });
+    return options
+      .sort((left, right) => order.indexOf(left.code) - order.indexOf(right.code))
+      .map((option) => ({ code: option.code, name: option.name }));
   }
 
   async cancel(id: string, dto: CancelSaleDto, actor: AuthUser, ip: string | null) {
@@ -148,7 +160,7 @@ export class SalesService {
     });
   }
 
-  private async completeCash(dto: CreateSaleDto, actor: AuthUser, ip: string | null, lines: QuoteLine[], total: number) {
+  private async completeImmediate(dto: CreateSaleDto, actor: AuthUser, ip: string | null, lines: QuoteLine[], total: number) {
     const saleId = await this.prisma.$transaction(async (tx) => {
       await this.stock.decrement(tx, dto.storeId, lines, false);
       const sale = await tx.sale.create({
@@ -157,7 +169,8 @@ export class SalesService {
           customerId: dto.customerId,
           sellerId: actor.id,
           status: 'COMPLETED',
-          paymentMethod: 'CASH',
+          paymentMethod: dto.paymentMethod,
+          channel: 'STORE',
           total,
           items: { create: lines.map((line) => ({ productId: line.productId, quantity: line.quantity, unitPrice: line.unitPrice })) },
         },
@@ -167,8 +180,8 @@ export class SalesService {
           data: {
             saleId: sale.id,
             amount: total,
-            method: 'CASH',
-            externalTransactionId: dto.externalTransactionId ?? `cash-${sale.id}`,
+            method: dto.paymentMethod,
+            externalTransactionId: dto.externalTransactionId ?? `${dto.paymentMethod.toLowerCase()}-${sale.id}`,
             status: 'CONFIRMED',
             registeredById: actor.id,
           },
@@ -181,10 +194,10 @@ export class SalesService {
         action: 'SALE_COMPLETED',
         entity: 'Sale',
         entityId: sale.id,
-        newValue: { total, paymentMethod: 'CASH' },
+        newValue: { total, paymentMethod: dto.paymentMethod },
         ip,
       });
-      await enqueueOutbox(tx, 'ORACLE_SALE', { saleId: sale.id, total, paymentMethod: 'CASH' });
+      await enqueueOutbox(tx, 'ORACLE_SALE', { saleId: sale.id, total, paymentMethod: dto.paymentMethod });
       return sale.id;
     });
     return this.get(saleId, actor);

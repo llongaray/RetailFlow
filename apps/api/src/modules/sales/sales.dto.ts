@@ -18,8 +18,8 @@ export class CreateSaleDto {
   @IsUUID()
   storeId!: string;
 
-  @IsIn(['CASH', 'FINANCED'])
-  paymentMethod!: 'CASH' | 'FINANCED';
+  @IsIn(['CASH', 'PIX', 'CARD', 'FINANCED'])
+  paymentMethod!: 'CASH' | 'PIX' | 'CARD' | 'FINANCED';
 
   @ArrayMinSize(1)
   @ValidateNested({ each: true })

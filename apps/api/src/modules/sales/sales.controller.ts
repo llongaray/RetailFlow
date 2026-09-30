@@ -14,6 +14,12 @@ export class SalesController {
     return this.sales.list(actor, status);
   }
 
+  @Get('payment-options')
+  @Permissions('sale.read')
+  paymentOptions() {
+    return this.sales.activePayments();
+  }
+
   @Get(':id')
   @Permissions('sale.read')
   get(@Param('id') id: string, @CurrentUser() actor: AuthUser) {

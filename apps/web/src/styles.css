@@ -128,17 +128,60 @@ a { color: inherit; }
 .pill[data-status='COMPLETED'], .pill[data-status='APPROVED'], .pill[data-status='PAID'], .pill[data-status='DONE'], .pill[data-status='ACTIVE'], .pill[data-status='RESOLVED'] { background: var(--pill-ok); color: var(--ok); }
 .pill[data-status='REJECTED'], .pill[data-status='CANCELLED'], .pill[data-status='FAILED'], .pill[data-status='REFUNDED'] { background: var(--pill-danger); color: var(--danger); }
 .pill[data-status='PENDING_CREDIT'], .pill[data-status='UNDER_ANALYSIS'], .pill[data-status='SUBMITTED'], .pill[data-status='OPEN'], .pill[data-status='IN_PROGRESS'], .pill[data-status='PROCESSING'] { background: var(--pill-pending); color: var(--gold); }
-.login { min-height: 100vh; display: grid; grid-template-columns: 1.1fr 0.9fr; }
-.login-story { padding: 64px; background: var(--sidebar); color: var(--login-text); display: flex; flex-direction: column; justify-content: flex-end; }
-.login-story h1 { font-family: Fraunces, serif; font-size: clamp(3rem, 6vw, 5rem); line-height: 0.95; margin: 12px 0; }
-.login-panel { display: flex; align-items: center; justify-content: center; padding: 32px; }
-.login-card { width: min(440px, 100%); display: grid; gap: 14px; }
-.accounts { display: grid; gap: 8px; }
-.accounts button { text-align: left; }
+.login { min-height: 100vh; display: grid; grid-template-columns: 1.15fr 0.85fr; background: var(--canvas); }
+.login-story { position: relative; overflow: hidden; min-height: 100vh; color: var(--login-text); background: var(--sidebar); }
+.login-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 72% center; transform-origin: 70% 50%; animation: login-drift 26s ease-in-out infinite alternate; }
+.login-story::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, var(--sidebar) 8%, color-mix(in srgb, var(--sidebar) 78%, transparent) 46%, color-mix(in srgb, var(--sidebar) 18%, transparent) 100%); }
+.login-curves { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; fill: none; stroke: var(--gold); stroke-width: 1.4; opacity: 0.55; }
+.login-curves path { stroke-dasharray: 8 14; animation: login-flow 18s linear infinite; }
+.login-curves path:nth-child(2) { animation-duration: 24s; animation-direction: reverse; }
+.login-copy { position: relative; z-index: 2; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; gap: 32px; padding: 56px 48px 40px; }
+.login-kicker { display: flex; align-items: center; gap: 12px; margin: 28px 0 18px; color: var(--brand-muted); letter-spacing: 0.16em; text-transform: uppercase; font-size: 0.72rem; }
+.login-kicker::before { content: ""; width: 28px; height: 1px; background: var(--gold); }
+.login-story h1 { font-family: Fraunces, serif; font-size: clamp(2.8rem, 4.6vw, 4.4rem); line-height: 0.98; margin: 0; max-width: 11ch; color: var(--field); }
+.login-story h1 em { font-style: italic; color: var(--pill); }
+.login-promise { max-width: 28ch; margin: 18px 0 0; color: var(--sidebar-text); font-size: 1.05rem; }
+.login-points { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.login-points article { display: grid; gap: 4px; padding: 14px; border-radius: 16px; background: color-mix(in srgb, var(--sidebar-active) 82%, transparent); border: 1px solid color-mix(in srgb, var(--login-text) 16%, transparent); transition: transform 180ms ease, background-color 180ms ease; }
+.login-points article:hover { transform: translateY(-3px); background: var(--sidebar-active); }
+.login-points svg { color: var(--pill); }
+.login-points strong { color: var(--field); font-size: 0.95rem; }
+.login-points span { color: var(--brand-muted); font-size: 0.8rem; line-height: 1.35; }
+.login-panel { display: flex; align-items: center; justify-content: center; padding: 32px 24px; }
+.login-card { width: min(440px, 100%); display: grid; gap: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 24px; padding: 28px 26px 22px; box-shadow: 0 18px 50px color-mix(in srgb, var(--sidebar) 8%, transparent); }
+.login-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.login-mark, .login-card h2 { font-family: Fraunces, serif; color: var(--sidebar); margin: 0; }
+.login-mark { font-size: 1.35rem; }
+.login-card h2 { font-size: 2rem; letter-spacing: -0.03em; }
+.login-safe { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 6px 10px; background: var(--pill-ok); color: var(--ok); font-size: 0.75rem; font-weight: 700; }
+.login-lead { margin: 0; color: var(--muted); }
+.login-input { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--field); padding: 0 8px 0 12px; color: var(--muted); }
+.login-input:focus-within { border-color: var(--ok); }
+.login-input input { flex: 1; min-width: 0; border: 0; background: transparent; padding: 12px 0; color: var(--ink); }
+.login-input input:focus { outline: none; }
+.login-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.login-check { display: flex; align-items: center; gap: 8px; color: var(--ink); font-size: 0.92rem; }
+.login-check input { accent-color: var(--ok); }
+.login-link { border: 0; background: transparent; padding: 0; color: var(--ok); cursor: pointer; font-weight: 700; }
+.login-note { margin: 0; color: var(--muted); background: var(--pill); border-radius: 12px; padding: 10px 12px; }
+.login-card > .btn { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.login-input .btn.icon { width: 40px; height: 40px; flex: 0 0 40px; border: 0; background: transparent; color: var(--muted); }
+.login-card .btn.primary { background: var(--sidebar); border-color: var(--sidebar); color: var(--login-text); }
+.login-card .btn.primary:hover { background: var(--sidebar-active); }
+.login-request { background: var(--field); }
+.login-or { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; margin: 0; color: var(--muted); font-size: 0.82rem; }
+.login-or::before, .login-or::after { content: ""; height: 1px; background: var(--line); }
+.login-foot { display: flex; align-items: flex-start; gap: 8px; margin: 0; color: var(--muted); font-size: 0.78rem; line-height: 1.4; }
+.login-foot svg { flex: 0 0 auto; color: var(--ok); margin-top: 1px; }
+@keyframes login-drift { from { transform: scale(1); } to { transform: scale(1.06); } }
+@keyframes login-flow { to { stroke-dashoffset: -220; } }
+@media (prefers-reduced-motion: reduce) {
+  .login-photo, .login-curves path, .login-points article { animation: none; transition: none; }
+}
 .wizard { display: grid; grid-template-columns: 1.4fr 0.8fr; gap: 16px; }
 .cart { position: sticky; top: 16px; }
-.modal-back { position: fixed; inset: 0; z-index: 30; background: var(--overlay); display: grid; place-items: center; padding: 20px; }
-.modal { width: min(480px, 100%); background: var(--panel); border-radius: 18px; padding: 22px; display: grid; gap: 12px; }
+.modal-back { position: fixed; inset: 0; z-index: 30; background: var(--overlay); display: grid; place-items: center; padding: 20px; overflow: hidden; }
+.modal { width: min(480px, 100%); max-height: calc(100dvh - 40px); overflow-y: auto; background: var(--panel); border-radius: 18px; padding: 22px; display: grid; gap: 12px; align-content: start; overscroll-behavior: contain; }
 .modal h2 { margin: 0; font-size: 1.6rem; }
 .toasts { position: fixed; right: 16px; bottom: 16px; display: grid; gap: 8px; z-index: 40; }
 .toast { background: var(--toast); color: var(--field); border-radius: 12px; padding: 12px 14px; max-width: 320px; }
@@ -148,6 +191,10 @@ a { color: inherit; }
 @media (max-width: 980px) {
   .shell, .shell.collapsed { display: block; }
   .login, .wizard, .split, .dash { grid-template-columns: 1fr; }
+  .login-story, .login-copy { min-height: 0; }
+  .login-copy { padding: 28px 20px; }
+  .login-points { grid-template-columns: 1fr; }
+  .login-story h1 { max-width: none; font-size: 2.4rem; }
   .head-search { max-width: none; flex-basis: 100%; }
   .sidebar { position: fixed; z-index: 20; top: 0; bottom: 0; left: 0; width: min(280px, 88vw); min-height: 0; transform: translateX(-105%); transition: transform 180ms ease; }
   .shell.drawer .sidebar { transform: none; }

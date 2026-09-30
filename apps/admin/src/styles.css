@@ -84,8 +84,8 @@ h2 { margin: 0; font-size: 1.6rem; }
 .pill.on { background: var(--pill-ok); color: var(--ok); }
 .pill.off { background: var(--pill-danger); color: var(--danger); }
 .pill.wait { background: var(--pill-pending); color: var(--gold); }
-.modal-back { position: fixed; inset: 0; z-index: 30; background: var(--overlay); display: grid; place-items: center; padding: 20px; }
-.modal { width: min(480px, 100%); background: var(--panel); border-radius: 18px; padding: 22px; display: grid; gap: 12px; }
+.modal-back { position: fixed; inset: 0; z-index: 30; background: var(--overlay); display: grid; place-items: center; padding: 20px; overflow: hidden; }
+.modal { width: min(480px, 100%); max-height: calc(100dvh - 40px); overflow-y: auto; background: var(--panel); border-radius: 18px; padding: 22px; display: grid; gap: 12px; align-content: start; overscroll-behavior: contain; }
 .logos { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
 .company-name { align-items: flex-end; }
 .company-name .field { flex: 1; min-width: 220px; }

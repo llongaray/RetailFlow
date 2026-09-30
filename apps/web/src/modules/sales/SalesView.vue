@@ -12,7 +12,7 @@ import type { Sale } from '../../types';
 import { formatBRL, STATUS_LABEL } from '../../utils/format';
 
 const mode = ref<'table' | 'board'>('table');
-const statuses = ['PENDING_CREDIT', 'COMPLETED', 'CANCELLED'];
+const statuses = ['PENDING_CREDIT', 'AWAITING_PAYMENT', 'COMPLETED', 'CANCELLED'];
 const list = useQuery({ queryKey: ['sales'], queryFn: () => api<Sale[]>('/api/v1/sales') });
 const sales = computed(() => list.data.value ?? []);
 
@@ -32,6 +32,7 @@ const columns: ColumnDef<Sale, unknown>[] = [
   },
   { id: 'customer', header: 'Cliente', accessorFn: (row) => row.customer.name },
   { id: 'store', header: 'Loja', accessorFn: (row) => row.store.name },
+  { id: 'channel', header: 'Canal', accessorFn: (row) => STATUS_LABEL[row.channel] ?? row.channel },
   { id: 'items', header: 'Itens', accessorFn: (row) => row.items.map((item) => `${item.quantity}× ${item.name}`).join(', ') },
   { id: 'total', header: 'Total', accessorFn: (row) => row.total, cell: (info) => formatBRL(info.getValue<number>()) },
   {
@@ -66,7 +67,7 @@ const board = computed<KanbanColumn[]>(() =>
 
 <template>
   <header class="topbar">
-    <div><h1>Vendas</h1><p>À vista ou financiadas, sempre ligadas à filial.</p></div>
+    <div><h1>Vendas</h1><p>À vista, PIX, cartão ou financiadas, sempre ligadas à filial.</p></div>
     <div class="row">
       <ViewSwitch v-model="mode" storage-key="rf-view-sales" />
       <RouterLink class="btn primary" to="/sales/new">Nova venda</RouterLink>

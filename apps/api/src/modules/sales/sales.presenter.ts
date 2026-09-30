@@ -9,6 +9,7 @@ const saleInclude = {
   proposal: true,
   payments: true,
   contract: { include: { schedule: { orderBy: { number: 'asc' as const } } } },
+  fiscalDocuments: { orderBy: { createdAt: 'desc' as const } },
 } satisfies Prisma.SaleInclude;
 
 export type SaleRecord = Prisma.SaleGetPayload<{ include: typeof saleInclude }>;
@@ -19,6 +20,8 @@ export function presentSale(sale: SaleRecord) {
     number: sale.number,
     status: sale.status,
     paymentMethod: sale.paymentMethod,
+    channel: sale.channel,
+    externalOrderId: sale.externalOrderId,
     total: asNumber(sale.total),
     cancelReason: sale.cancelReason,
     cancelledAt: sale.cancelledAt,
@@ -50,6 +53,15 @@ export function presentSale(sale: SaleRecord) {
       status: payment.status,
       externalTransactionId: payment.externalTransactionId,
       method: payment.method,
+    })),
+    documents: sale.fiscalDocuments.map((document) => ({
+      id: document.id,
+      kind: document.kind,
+      status: document.status,
+      accessKey: document.accessKey,
+      number: document.number,
+      link: document.link,
+      pushedToChannel: document.pushedToChannel,
     })),
     contract: sale.contract
       ? {

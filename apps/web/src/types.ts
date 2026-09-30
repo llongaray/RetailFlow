@@ -19,6 +19,7 @@ export type Customer = {
   phone: string | null;
   creditLimit: number;
   stage: string;
+  source: string;
   active: boolean;
   createdAt: string;
   proposalCount?: number;
@@ -43,6 +44,8 @@ export type Sale = {
   number: number;
   status: string;
   paymentMethod: string;
+  channel: string;
+  externalOrderId: string | null;
   total: number;
   cancelReason: string | null;
   createdAt: string;
@@ -59,6 +62,7 @@ export type Sale = {
     rejectionReason: string | null;
   } | null;
   payments: { id: string; amount: number; status: string; externalTransactionId: string }[];
+  documents: { id: string; kind: string; status: string; accessKey: string | null; number: string | null; link: string | null; pushedToChannel: boolean }[];
   contract: {
     id: string;
     number: number;

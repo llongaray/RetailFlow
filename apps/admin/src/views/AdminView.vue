@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Building2, KeyRound, Plug, Truck, UserRound, Users, Wallet } from 'lucide-vue-next';
+import { Building2, FileText, KeyRound, Plug, Receipt, Truck, UserRound, Users, Wallet } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Modal from '../components/Modal.vue';
@@ -12,6 +12,30 @@ type Payment = { id: string; code: string; name: string; active: boolean };
 type Supplier = { id: string; name: string; document: string | null; active: boolean };
 type ApiKey = { id: string; name: string; prefix: string; active: boolean };
 type Company = { name: string; logoSquare: string | null; logoWide: string | null; logoStory: string | null };
+type NuvemshopApp = {
+  mode: string;
+  redirectUri: string;
+  connected: boolean;
+  storeName: string | null;
+  nuvemshopStoreId: string | null;
+};
+type BillingAccount = { mode: string; ready: boolean; active: boolean };
+type FiscalProfile = {
+  cnpj: string;
+  legalName: string;
+  tradeName: string | null;
+  stateRegistration: string | null;
+  municipalRegistration: string | null;
+  regime: string;
+  ncm: string;
+  cfop: string;
+  csosn: string;
+  cest: string | null;
+  serviceCode: string | null;
+  issRate: number | null;
+  city: string;
+  hasCertificate: boolean;
+};
 
 const ROLE: Record<string, string> = {
   ADMIN: 'Administração',
@@ -33,12 +57,33 @@ const payments = ref<Payment[]>([]);
 const suppliers = ref<Supplier[]>([]);
 const keys = ref<ApiKey[]>([]);
 const company = ref<Company>({ name: '', logoSquare: null, logoWide: null, logoStory: null });
+const nuvemshopApp = ref<NuvemshopApp>({ mode: 'demo', redirectUri: '', connected: false, storeName: null, nuvemshopStoreId: null });
+const billingAccount = ref<BillingAccount>({ mode: 'demo', ready: false, active: false });
+const fiscalProfile = ref<FiscalProfile | null>(null);
 const freshToken = ref('');
-const dialog = ref<'collaborator' | 'customer' | 'supplier' | 'key' | ''>('');
+const dialog = ref<'collaborator' | 'customer' | 'supplier' | 'key' | 'billing' | 'fiscal' | ''>('');
 const collaborator = ref({ name: '', email: '', password: '', role: 'VENDEDOR', storeId: '' });
 const customer = ref({ name: '', cpf: '', phone: '' });
 const supplier = ref({ name: '', document: '' });
 const keyName = ref('');
+const billingForm = ref({ publicKey: '', accessToken: '' });
+const fiscalForm = ref({
+  cnpj: '',
+  legalName: '',
+  tradeName: '',
+  stateRegistration: '',
+  municipalRegistration: '',
+  regime: '',
+  ncm: '',
+  cfop: '',
+  csosn: '',
+  cest: '',
+  serviceCode: '',
+  issRate: '',
+  city: '',
+  certificateBase64: '',
+  certificatePassword: '',
+});
 const secrets = ref<Record<string, string>>({});
 const sessionName = ref('Superusuário');
 
@@ -47,6 +92,8 @@ const sections = [
   { id: 'clientes', label: 'Clientes', icon: UserRound },
   { id: 'conectores', label: 'Conectores', icon: Plug },
   { id: 'pagamentos', label: 'Pagamentos', icon: Wallet },
+  { id: 'cobranca', label: 'Cobrança', icon: Receipt },
+  { id: 'fiscal', label: 'Fiscal', icon: FileText },
   { id: 'fornecedores', label: 'Fornecedores', icon: Truck },
   { id: 'chaves', label: 'Chaves', icon: KeyRound },
   { id: 'empresa', label: 'Empresa', icon: Building2 },
@@ -78,7 +125,7 @@ function formatCpf(value?: string) {
 }
 
 async function load() {
-  const [people, clients, shop, connectors, options, vendors, issued, profile] = await Promise.all([
+  const [people, clients, shop, connectors, options, vendors, issued, profile, app, account, fiscal] = await Promise.all([
     api<Person[]>('/api/v1/admin/collaborators'),
     api<Person[]>('/api/v1/admin/customers'),
     api<Shop[]>('/api/v1/admin/stores'),
@@ -87,6 +134,9 @@ async function load() {
     api<Supplier[]>('/api/v1/admin/suppliers'),
     api<ApiKey[]>('/api/v1/admin/api-keys'),
     api<Company>('/api/v1/admin/company'),
+    api<NuvemshopApp>('/api/v1/admin/nuvemshop'),
+    api<BillingAccount>('/api/v1/admin/billing'),
+    api<{ mode: string; profile: FiscalProfile | null }>('/api/v1/admin/fiscal'),
   ]);
   collaborators.value = people;
   customers.value = clients;
@@ -96,6 +146,9 @@ async function load() {
   suppliers.value = vendors;
   keys.value = issued;
   company.value = profile;
+  nuvemshopApp.value = app;
+  billingAccount.value = account;
+  fiscalProfile.value = fiscal.profile;
 }
 
 function fail(cause: unknown) {
@@ -148,6 +201,84 @@ async function saveProvider(provider: Provider) {
     });
     secrets.value[provider.id] = '';
     await load();
+  } catch (cause) {
+    fail(cause);
+  }
+}
+
+async function authorizeNuvemshop() {
+  error.value = '';
+  try {
+    const result = await api<{ url: string }>('/api/v1/admin/nuvemshop/oauth', { method: 'POST', body: '{}' });
+    window.location.assign(result.url);
+  } catch (cause) {
+    fail(cause);
+  }
+}
+
+function openBilling() {
+  billingForm.value = { publicKey: '', accessToken: '' };
+  dialog.value = 'billing';
+}
+
+async function saveBilling() {
+  error.value = '';
+  try {
+    billingAccount.value = await api<BillingAccount>('/api/v1/admin/billing', { method: 'POST', body: JSON.stringify(billingForm.value) });
+    billingForm.value = { publicKey: '', accessToken: '' };
+    dialog.value = '';
+  } catch (cause) {
+    fail(cause);
+  }
+}
+
+function openFiscal() {
+  const profile = fiscalProfile.value;
+  fiscalForm.value = {
+    cnpj: profile?.cnpj ?? '',
+    legalName: profile?.legalName ?? '',
+    tradeName: profile?.tradeName ?? '',
+    stateRegistration: profile?.stateRegistration ?? '',
+    municipalRegistration: profile?.municipalRegistration ?? '',
+    regime: profile?.regime ?? '',
+    ncm: profile?.ncm ?? '',
+    cfop: profile?.cfop ?? '',
+    csosn: profile?.csosn ?? '',
+    cest: profile?.cest ?? '',
+    serviceCode: profile?.serviceCode ?? '',
+    issRate: profile?.issRate === null || profile?.issRate === undefined ? '' : String(profile.issRate),
+    city: profile?.city ?? '',
+    certificateBase64: '',
+    certificatePassword: '',
+  };
+  dialog.value = 'fiscal';
+}
+
+function readCertificate(event: Event) {
+  const file = (event.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const value = String(reader.result ?? '');
+    fiscalForm.value.certificateBase64 = value.includes(',') ? value.split(',')[1] : value;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveFiscal() {
+  error.value = '';
+  try {
+    const saved = await api<{ profile: FiscalProfile | null }>('/api/v1/admin/fiscal', {
+      method: 'POST',
+      body: JSON.stringify({
+        ...fiscalForm.value,
+        issRate: fiscalForm.value.issRate === '' ? undefined : Number(fiscalForm.value.issRate),
+        certificateBase64: fiscalForm.value.certificateBase64 || undefined,
+        certificatePassword: fiscalForm.value.certificatePassword || undefined,
+      }),
+    });
+    fiscalProfile.value = saved.profile;
+    dialog.value = '';
   } catch (cause) {
     fail(cause);
   }
@@ -221,6 +352,11 @@ onMounted(() => {
     if (saved?.name) sessionName.value = saved.name;
   } catch {
     sessionName.value = 'Superusuário';
+  }
+  const oauth = new URLSearchParams(window.location.search).get('nuvemshop');
+  if (oauth) {
+    section.value = 'conectores';
+    if (oauth === 'erro') error.value = 'A Nuvemshop não concluiu a autorização. Entre de novo, já logado na conta da loja.';
   }
   void load();
 });
@@ -313,6 +449,15 @@ onMounted(() => {
             <article><span>Com segredo</span><strong>{{ providers.filter((item) => item.hasSecret).length }}</strong></article>
           </section>
           <section class="cards">
+            <article class="card connector">
+              <div class="row">
+                <strong>Nuvemshop</strong>
+                <span class="pill" :class="nuvemshopApp.connected ? 'on' : 'wait'">{{ nuvemshopApp.connected ? 'Conectada' : 'Sem loja' }}</span>
+              </div>
+              <p class="muted">{{ nuvemshopApp.connected ? `${nuvemshopApp.storeName} · ${nuvemshopApp.nuvemshopStoreId}` : 'Aplicativo do RetailFlow. O identificador e o segredo ficam no ambiente.' }}</p>
+              <p class="muted">Abra a autorização já logado na conta Nuvemshop da loja. A Nuvemshop pede a permissão dessa conta.</p>
+              <button class="btn primary" type="button" @click="authorizeNuvemshop">Autorizar na Nuvemshop</button>
+            </article>
             <article v-for="provider in providers" :key="provider.id" class="card connector">
               <div class="row">
                 <strong>{{ provider.name }}</strong>
@@ -345,6 +490,31 @@ onMounted(() => {
               </tbody>
             </table>
           </section>
+        </template>
+
+        <template v-else-if="section === 'cobranca'">
+          <div class="top">
+            <div><h1>Cobrança</h1><p class="lede">Mercado Pago. As chaves saem criptografadas e não voltam para a tela.</p></div>
+            <button class="btn primary" type="button" @click="openBilling">Configurar Mercado Pago</button>
+          </div>
+          <section class="summary">
+            <article><span>Provedor</span><strong>Mercado Pago</strong></article>
+            <article><span>Modo</span><strong>{{ billingAccount.mode === 'live' ? 'Ao vivo' : 'Demonstração' }}</strong></article>
+            <article><span>Chaves</span><strong>{{ billingAccount.ready ? 'Guardadas' : 'Ainda não' }}</strong></article>
+          </section>
+        </template>
+
+        <template v-else-if="section === 'fiscal'">
+          <div class="top">
+            <div><h1>Fiscal</h1><p class="lede">Um perfil da empresa. NF-e e NFS-e são notas diferentes.</p></div>
+            <button class="btn primary" type="button" @click="openFiscal">Editar perfil</button>
+          </div>
+          <section class="card" v-if="fiscalProfile">
+            <p>{{ fiscalProfile.legalName }} · {{ fiscalProfile.cnpj }}</p>
+            <p>{{ fiscalProfile.city }} · {{ fiscalProfile.regime }} · NCM {{ fiscalProfile.ncm }} · CFOP {{ fiscalProfile.cfop }} · CSOSN {{ fiscalProfile.csosn }}</p>
+            <p>{{ fiscalProfile.hasCertificate ? 'Certificado A1 guardado.' : 'Sem certificado A1.' }}</p>
+          </section>
+          <p v-else class="lede">Nenhum perfil fiscal ainda.</p>
         </template>
 
         <template v-else-if="section === 'fornecedores'">
@@ -458,7 +628,33 @@ onMounted(() => {
       <label class="field">Documento<input v-model="supplier.document" /></label>
       <div class="row"><button class="btn" type="button" @click="dialog = ''">Voltar</button><button class="btn primary" type="submit">Criar</button></div>
     </form>
-    <form v-else class="grid" @submit.prevent="createKey">
+    <form v-else-if="dialog === 'billing'" class="grid" @submit.prevent="saveBilling">
+      <h2>Mercado Pago</h2>
+      <label class="field">Public key<input v-model="billingForm.publicKey" autocomplete="off" /></label>
+      <label class="field">Access token<input v-model="billingForm.accessToken" type="password" autocomplete="off" /></label>
+      <p class="muted">Em branco, a chave já guardada permanece.</p>
+      <div class="row"><button class="btn" type="button" @click="dialog = ''">Voltar</button><button class="btn primary" type="submit">Guardar</button></div>
+    </form>
+    <form v-else-if="dialog === 'fiscal'" class="grid" @submit.prevent="saveFiscal">
+      <h2>Perfil fiscal</h2>
+      <label class="field">CNPJ<input v-model="fiscalForm.cnpj" required /></label>
+      <label class="field">Razão social<input v-model="fiscalForm.legalName" required /></label>
+      <label class="field">Nome fantasia<input v-model="fiscalForm.tradeName" /></label>
+      <label class="field">Inscrição estadual<input v-model="fiscalForm.stateRegistration" /></label>
+      <label class="field">Inscrição municipal<input v-model="fiscalForm.municipalRegistration" /></label>
+      <label class="field">Regime<input v-model="fiscalForm.regime" required /></label>
+      <label class="field">NCM<input v-model="fiscalForm.ncm" required /></label>
+      <label class="field">CFOP<input v-model="fiscalForm.cfop" required /></label>
+      <label class="field">CSOSN<input v-model="fiscalForm.csosn" required /></label>
+      <label class="field">CEST<input v-model="fiscalForm.cest" /></label>
+      <label class="field">Código de serviço<input v-model="fiscalForm.serviceCode" /></label>
+      <label class="field">ISS<input v-model="fiscalForm.issRate" /></label>
+      <label class="field">Município<input v-model="fiscalForm.city" required /></label>
+      <label class="field">Certificado A1<input type="file" accept=".pfx,.p12,application/x-pkcs12" @change="readCertificate" /></label>
+      <label class="field">Senha do certificado<input v-model="fiscalForm.certificatePassword" type="password" autocomplete="off" /></label>
+      <div class="row"><button class="btn" type="button" @click="dialog = ''">Voltar</button><button class="btn primary" type="submit">Guardar</button></div>
+    </form>
+    <form v-else-if="dialog === 'key'" class="grid" @submit.prevent="createKey">
       <h2>Nova chave</h2>
       <label class="field">Nome<input v-model="keyName" data-testid="key-name" required /></label>
       <div class="row"><button class="btn" type="button" @click="dialog = ''">Voltar</button><button class="btn primary" data-testid="create-key" type="submit">Emitir</button></div>

@@ -17,9 +17,12 @@ import { useSession } from '../../stores/session';
 import type { Customer } from '../../types';
 import { formatBRL, formatCpf, formatDate, STATUS_LABEL } from '../../utils/format';
 
+type CustomerSale = { id: string; number: number; status: string; channel: string; externalOrderId: string | null; total: number; storeName: string; createdAt: string };
 type CustomerFile = Customer & {
   tickets: { id: string; subject: string; status: string; createdAt: string }[];
-  sales: { id: string; number: number; status: string; total: number; storeName: string; createdAt: string }[];
+  sales: CustomerSale[];
+  externalOrders: CustomerSale[];
+  charges: { id: string; amount: number; method: string; status: string; copyPaste: string | null; createdAt: string }[];
 };
 
 const session = useSession();
@@ -36,6 +39,9 @@ const customers = computed(() => list.data.value ?? []);
 const mode = ref<'table' | 'board'>('table');
 const createOpen = ref(false);
 const detailOpen = ref(false);
+const chargeOpen = ref(false);
+const chargeAmount = ref(0);
+const chargeCopy = ref('');
 const detail = ref<CustomerFile | null>(null);
 const error = ref('');
 const stages = ['LEAD', 'ATIVO', 'INADIMPLENTE', 'INATIVO'];
@@ -58,6 +64,7 @@ const summary = computed(() => {
 const columns: ColumnDef<Customer, unknown>[] = [
   { accessorKey: 'name', header: 'Nome' },
   { id: 'cpf', header: 'CPF', accessorFn: (row) => formatCpf(row.cpf) },
+  { id: 'source', header: 'Origem', accessorFn: (row) => STATUS_LABEL[row.source] ?? row.source },
   { id: 'stage', header: 'Etapa', accessorFn: (row) => STATUS_LABEL[row.stage] ?? row.stage },
   { id: 'creditLimit', header: 'Limite', accessorFn: (row) => row.creditLimit, cell: (info) => formatBRL(info.getValue<number>()) },
   {
@@ -131,6 +138,37 @@ async function openDetail(id: string) {
   detailOpen.value = true;
 }
 
+function openCharge() {
+  const waiting = detail.value?.sales.find((sale) => sale.status === 'AWAITING_PAYMENT');
+  chargeAmount.value = waiting?.total ?? 0;
+  chargeCopy.value = '';
+  error.value = '';
+  chargeOpen.value = true;
+}
+
+async function createCharge() {
+  if (!detail.value) return;
+  error.value = '';
+  try {
+    const waiting = detail.value.sales.find((sale) => sale.status === 'AWAITING_PAYMENT');
+    const charge = await api<{ copyPaste: string | null }>('/api/v1/charges', {
+      method: 'POST',
+      body: JSON.stringify({
+        customerId: detail.value.id,
+        saleId: waiting?.id,
+        amount: chargeAmount.value,
+        method: 'PIX',
+      }),
+    });
+    chargeCopy.value = charge.copyPaste ?? '';
+    session.notify('Cobrança PIX gerada.');
+    await queryClient.invalidateQueries({ queryKey: ['customer', detail.value.id] });
+    detail.value = await api<CustomerFile>(`/api/v1/customers/${detail.value.id}`);
+  } catch (cause) {
+    error.value = cause instanceof ApiError ? cause.message : 'Falha ao gerar a cobrança.';
+  }
+}
+
 const create = handleSubmit(async (values) => {
   error.value = '';
   try {
@@ -199,10 +237,44 @@ watch(createOpen, (open) => {
       </div>
     </form>
   </Modal>
+  <Modal v-model="chargeOpen">
+    <form class="grid" @submit.prevent="createCharge">
+      <h2>Nova cobrança</h2>
+      <label class="field">Valor PIX<input v-model.number="chargeAmount" type="number" min="0.01" step="0.01" required /></label>
+      <p v-if="chargeCopy">Copia-e-cola: {{ chargeCopy }}</p>
+      <p v-if="error && chargeOpen">{{ error }}</p>
+      <div class="row">
+        <button class="btn" type="button" @click="chargeOpen = false">Voltar</button>
+        <button class="btn primary" type="submit">Gerar PIX</button>
+      </div>
+    </form>
+  </Modal>
   <Modal v-model="detailOpen" wide>
     <div v-if="detail" class="grid">
       <h2>{{ detail.name }}</h2>
-      <p>{{ formatCpf(detail.cpf) }} · {{ STATUS_LABEL[detail.stage] ?? detail.stage }} · limite {{ formatBRL(detail.creditLimit) }}</p>
+      <p>{{ formatCpf(detail.cpf) }} · {{ STATUS_LABEL[detail.source] ?? detail.source }} · {{ STATUS_LABEL[detail.stage] ?? detail.stage }} · limite {{ formatBRL(detail.creditLimit) }}</p>
+      <div v-if="session.can('payment.create')" class="row">
+        <button class="btn" type="button" @click="openCharge">Nova cobrança</button>
+      </div>
+      <section>
+        <h2>Pedidos externos</h2>
+        <p v-if="!detail.externalOrders.length" class="empty">Nenhum pedido de canal externo.</p>
+        <table v-else class="table">
+          <thead><tr><th>Número</th><th>Pedido</th><th>Total</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr v-for="sale in detail.externalOrders" :key="sale.id">
+              <td><RouterLink :to="`/sales/${sale.id}`">#{{ sale.number }}</RouterLink></td>
+              <td>{{ sale.externalOrderId }}</td>
+              <td>{{ formatBRL(sale.total) }}</td>
+              <td>{{ STATUS_LABEL[sale.status] ?? sale.status }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section v-if="detail.charges.length">
+        <h2>Cobranças</h2>
+        <p v-for="charge in detail.charges" :key="charge.id">{{ charge.method }} · {{ formatBRL(charge.amount) }} · {{ STATUS_LABEL[charge.status] ?? charge.status }}</p>
+      </section>
       <section>
         <h2>Compras</h2>
         <p v-if="!detail.sales.length" class="empty">Nenhuma compra neste recorte.</p>

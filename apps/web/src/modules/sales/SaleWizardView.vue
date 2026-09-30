@@ -16,7 +16,9 @@ const cpf = ref('');
 const customer = ref<Customer | null>(null);
 const newName = ref('');
 const cart = ref<{ product: Product; quantity: number }[]>([]);
-const method = ref<'CASH' | 'FINANCED'>('CASH');
+const methodLabels: Record<string, string> = { CASH: 'À vista', PIX: 'PIX', CARD: 'Cartão à vista', FINANCED: 'Financiado' };
+const methods = ref<string[]>(['CASH', 'PIX', 'CARD', 'FINANCED']);
+const method = ref('CASH');
 const installments = ref(12);
 const simulation = ref<{ installmentAmount: number; total: number } | null>(null);
 const confirmOpen = ref(false);
@@ -28,6 +30,12 @@ const stockOf = (product: Product) => product.stock.find((item) => item.storeId 
 onMounted(async () => {
   stores.value = await api<Store[]>('/api/v1/stores');
   if (!storeId.value) storeId.value = stores.value.find((store) => store.active)?.id ?? '';
+  try {
+    const options = await api<{ code: string; name: string }[]>('/api/v1/sales/payment-options');
+    if (options.length) methods.value = options.map((option) => option.code);
+  } catch {
+    methods.value = ['CASH', 'PIX', 'CARD', 'FINANCED'];
+  }
   await loadProducts();
 });
 
@@ -79,7 +87,7 @@ async function submit() {
         items: cart.value.map((item) => ({ productId: item.product.id, quantity: item.quantity })),
       }),
     });
-    session.notify(method.value === 'CASH' ? 'Venda concluída.' : 'Proposta enviada para análise.');
+    session.notify(method.value === 'FINANCED' ? 'Proposta enviada para análise.' : 'Venda concluída.');
     router.push(`/sales/${sale.id}`);
   } catch (cause) {
     error.value = cause instanceof ApiError ? cause.message : 'Falha ao registrar a venda.';
@@ -130,8 +138,7 @@ async function submit() {
       <strong data-testid="sale-total">{{ formatBRL(total) }}</strong>
       <label class="field">Pagamento
         <select v-model="method" data-testid="sale-method">
-          <option value="CASH">À vista</option>
-          <option value="FINANCED">Financiado</option>
+          <option v-for="code in methods" :key="code" :value="code">{{ methodLabels[code] ?? code }}</option>
         </select>
       </label>
       <template v-if="method === 'FINANCED'">
@@ -144,7 +151,7 @@ async function submit() {
   </div>
   <Modal v-model="confirmOpen">
     <form class="grid" @submit.prevent="submit">
-      <h2>{{ method === 'CASH' ? 'Confirmar venda à vista' : 'Enviar proposta de crédito' }}</h2>
+      <h2>{{ method === 'FINANCED' ? 'Enviar proposta de crédito' : 'Confirmar venda' }}</h2>
       <p>{{ customer?.name }} · {{ formatCpf(customer?.cpf ?? '') }}</p>
       <p>{{ formatBRL(total) }}</p>
       <p v-if="error">{{ error }}</p>

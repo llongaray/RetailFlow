@@ -10,6 +10,8 @@ A v3 acrescenta um segundo Vue, o admin, na mesma API. O painel da loja ganha me
 
 A v4 não cria endpoint. O painel passa a desenhar em cima das respostas que já existiam: Lucide no menu, TanStack Query em volta do cliente HTTP, TanStack Table nas listas, ECharts no consolidado e VeeValidate com Zod só no cadastro de cliente. O corpo do POST desse cadastro permanece `{ name, cpf, phone }`.
 
+A v5 trata a Nuvemshop como origem de pedidos. A empresa única continua sendo o lojista e a conexão aponta para uma filial. PIX e cartão à vista concluem como o dinheiro. Pedido externo já pago vira venda `NUVEMSHOP` concluída, sem crédito. Token, chave de gateway e certificado A1 ficam cifrados com `INTEGRATION_SECRET`.
+
 ## Acessos locais
 
 A lista completa, com Swagger, saúde, métricas, SQL Server e Redis, está em [Acessos](../../README.md#acessos).
@@ -28,7 +30,7 @@ A lista completa, com Swagger, saúde, métricas, SQL Server e Redis, está em [
 | --- | --- |
 | `prisma` | Schema, migrations e seed |
 | `src/domain` | Regras puras: CPF, RBAC, estoque, venda, crédito, contrato, pagamento e proporção de logo |
-| `src/modules` | `auth`, `users`, `stores`, `customers`, `products`, `inventory`, `sales`, `credit`, `contracts`, `payments`, `support`, `audit`, `dashboard`, `integrations`, `metrics`, `health`, `admin`, `company`, `partner` |
+| `src/modules` | `auth`, `users`, `stores`, `customers`, `products`, `inventory`, `sales`, `credit`, `contracts`, `payments`, `support`, `audit`, `dashboard`, `integrations`, `nuvemshop`, `billing`, `fiscal`, `metrics`, `health`, `admin`, `company`, `partner` |
 | `src/infrastructure/database` | Cliente Prisma |
 | `src/infrastructure/audit` | Gravação de `audit_logs` na mesma transação |
 | `src/infrastructure/integrations` | Outbox, worker BullMQ e mock Oracle |

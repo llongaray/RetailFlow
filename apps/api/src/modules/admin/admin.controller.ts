@@ -1,12 +1,16 @@
 import { Body, Controller, Get, Param, Patch, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
-import { IsBoolean, IsEmail, IsIn, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsBoolean, IsEmail, IsIn, IsNumber, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
 import { Public } from '../../common/decorators';
 import { LOGO_SLOTS, type LogoSlot } from '../../domain/logo.rules';
 import { ROLES } from '../../domain/permissions';
+import { BillingService } from '../billing/billing.service';
 import { AuthService } from '../auth/auth.service';
 import { LoginDto } from '../auth/dto/login.dto';
+import { FiscalService } from '../fiscal/fiscal.service';
+import { NuvemshopService } from '../nuvemshop/nuvemshop.service';
 import { AdminService } from './admin.service';
 import { SuperuserGuard } from './superuser.guard';
 
@@ -84,11 +88,81 @@ class LogoDto {
   slot!: LogoSlot;
 }
 
+class BillingAccountDto {
+  @IsOptional()
+  @IsString()
+  publicKey?: string;
+
+  @IsOptional()
+  @IsString()
+  accessToken?: string;
+}
+
+class FiscalProfileDto {
+  @IsString()
+  cnpj!: string;
+
+  @IsString()
+  @MinLength(2)
+  legalName!: string;
+
+  @IsOptional()
+  @IsString()
+  tradeName?: string;
+
+  @IsOptional()
+  @IsString()
+  stateRegistration?: string;
+
+  @IsOptional()
+  @IsString()
+  municipalRegistration?: string;
+
+  @IsString()
+  regime!: string;
+
+  @IsString()
+  ncm!: string;
+
+  @IsString()
+  cfop!: string;
+
+  @IsString()
+  csosn!: string;
+
+  @IsOptional()
+  @IsString()
+  cest?: string;
+
+  @IsOptional()
+  @IsString()
+  serviceCode?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  issRate?: number;
+
+  @IsString()
+  city!: string;
+
+  @IsOptional()
+  @IsString()
+  certificateBase64?: string;
+
+  @IsOptional()
+  @IsString()
+  certificatePassword?: string;
+}
+
 @Controller('admin')
 export class AdminController {
   constructor(
     private readonly admin: AdminService,
     private readonly auth: AuthService,
+    private readonly billing: BillingService,
+    private readonly fiscal: FiscalService,
+    private readonly nuvemshop: NuvemshopService,
   ) {}
 
   @Public()
@@ -217,5 +291,41 @@ export class AdminController {
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 2_000_000 } }))
   uploadLogo(@UploadedFile() file: { buffer: Buffer; mimetype: string; originalname: string }, @Body() dto: LogoDto) {
     return this.admin.saveLogo(dto.slot, file);
+  }
+
+  @UseGuards(SuperuserGuard)
+  @Get('nuvemshop')
+  nuvemshopApp() {
+    return this.nuvemshop.status().then((connection) => ({ ...connection, ...this.nuvemshop.appProfile() }));
+  }
+
+  @UseGuards(SuperuserGuard)
+  @Post('nuvemshop/oauth')
+  nuvemshopOauth() {
+    return this.nuvemshop.oauthStart();
+  }
+
+  @UseGuards(SuperuserGuard)
+  @Get('billing')
+  billingAccount() {
+    return this.billing.status();
+  }
+
+  @UseGuards(SuperuserGuard)
+  @Post('billing')
+  saveBilling(@Body() dto: BillingAccountDto) {
+    return this.billing.saveAccount(dto);
+  }
+
+  @UseGuards(SuperuserGuard)
+  @Get('fiscal')
+  fiscalProfile() {
+    return this.fiscal.profile();
+  }
+
+  @UseGuards(SuperuserGuard)
+  @Post('fiscal')
+  saveFiscal(@Body() dto: FiscalProfileDto) {
+    return this.fiscal.saveProfile(dto);
   }
 }
