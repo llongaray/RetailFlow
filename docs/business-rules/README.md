@@ -1,5 +1,19 @@
 # Regras de negócio
 
+`base_dir`: `apps/api/src/domain`.
+
+Não há subpastas. Cada regra mora num arquivo ao lado do teste:
+
+| Arquivo | Cobre |
+| --- | --- |
+| `cpf.ts` | RN001, dígitos e normalização |
+| `sale.rules.ts` | RN002, RN010 e RN011 |
+| `inventory.rules.ts` | RN003 e RN004 |
+| `credit.rules.ts` | RN005, RN006, RN007 e RN014 |
+| `contract.rules.ts` | RN009 e RN012 |
+| `payment.rules.ts` | RN008 no estorno e RN013 |
+| `permissions.ts` | Papéis e permissões granulares |
+
 | ID | Regra |
 | --- | --- |
 | RN001 | CPF identifica um único cliente. |

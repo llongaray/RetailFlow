@@ -11,6 +11,13 @@ async function bootstrap() {
   await startTelemetry();
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('api/v1');
+  app.use((request: Request, response: Response, next: NextFunction) => {
+    if ((request.method === 'GET' || request.method === 'HEAD') && request.path === '/') {
+      response.redirect(302, '/api/docs');
+      return;
+    }
+    next();
+  });
   const config = app.get(ConfigService);
   app.enableCors({ origin: config.get<string>('WEB_ORIGIN') ?? 'http://localhost:5173' });
   app.use((request: Request & { requestId?: string }, response: Response, next: NextFunction) => {

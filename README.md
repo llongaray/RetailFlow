@@ -12,7 +12,26 @@ Vue 3 → REST / GraphQL → NestJS → SQL Server
                               └── adaptador Oracle (mock)
 ```
 
-GraphQL existe só para o consolidado gerencial. O restante da operação é REST, documentado em `/api/docs` quando a API está no ar.
+GraphQL existe só para o consolidado gerencial. O restante da operação é REST. Abrir `http://localhost:3000` redireciona para `/api/docs`.
+
+## Estrutura
+
+`base_dir`: raiz do repositório.
+
+| Subpasta | Conteúdo |
+| --- | --- |
+| `apps/api` | API NestJS, Prisma e testes de domínio |
+| `apps/web` | Painel Vue 3 |
+| `packages/types` | Contratos compartilhados entre API e painel |
+| `docs/adr` | Decisões de arquitetura |
+| `docs/architecture` | Visão técnica e mapa das pastas da API e do painel |
+| `docs/business-rules` | Regras RN001–RN014 e onde o código as implementa |
+| `docs/images` | Capturas do ponto de venda, da fila de crédito e do contrato |
+| `e2e` | Playwright do fluxo financiado, só local |
+| `scripts` | Atalho do Prisma com o `.env` da raiz |
+| `.github/workflows` | CI: lint, testes de domínio e build |
+
+Na raiz também ficam `docker-compose.yml` (SQL Server e Redis), `package.json` (workspaces), `eslint.config.js` e `playwright.config.ts`.
 
 ## Subir localmente
 
