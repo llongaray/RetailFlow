@@ -11,12 +11,14 @@ import SaleWizardView from '../modules/sales/SaleWizardView.vue';
 import SalesView from '../modules/sales/SalesView.vue';
 import SupportView from '../modules/support/SupportView.vue';
 import LoginView from '../views/LoginView.vue';
+import WelcomeView from '../views/WelcomeView.vue';
 
 export const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/login', component: LoginView, meta: { public: true } },
     { path: '/', component: DashboardView },
+    { path: '/welcome', component: WelcomeView },
     { path: '/customers', component: CustomersView, meta: { permission: 'customer.read' } },
     { path: '/catalog', component: CatalogView, meta: { permission: 'catalog.read' } },
     { path: '/sales', component: SalesView, meta: { permission: 'sale.read' } },

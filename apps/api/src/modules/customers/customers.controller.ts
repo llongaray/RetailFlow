@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { Type } from 'class-transformer';
-import { IsEmail, IsNumber, IsOptional, IsString, Min, MinLength } from 'class-validator';
+import { IsEmail, IsIn, IsNumber, IsOptional, IsString, Min, MinLength } from 'class-validator';
 import type { AuthUser } from '../../common/auth-user';
 import { CurrentUser, Permissions, requestIp, type RequestWithContext } from '../../common/decorators';
 import { Req } from '@nestjs/common';
@@ -21,6 +21,11 @@ export class CreateCustomerDto {
   @IsOptional()
   @IsString()
   phone?: string;
+}
+
+export class UpdateStageDto {
+  @IsIn(['LEAD', 'ATIVO', 'INADIMPLENTE', 'INATIVO'])
+  stage!: 'LEAD' | 'ATIVO' | 'INADIMPLENTE' | 'INATIVO';
 }
 
 export class UpdateCreditLimitDto {
@@ -50,6 +55,17 @@ export class CustomersController {
   @Permissions('customer.create')
   create(@Body() dto: CreateCustomerDto) {
     return this.customers.create(dto);
+  }
+
+  @Patch(':id/stage')
+  @Permissions('customer.create')
+  updateStage(
+    @Param('id') id: string,
+    @Body() dto: UpdateStageDto,
+    @CurrentUser() actor: AuthUser,
+    @Req() request: RequestWithContext,
+  ) {
+    return this.customers.updateStage(id, dto.stage, actor, requestIp(request));
   }
 
   @Patch(':id/credit-limit')

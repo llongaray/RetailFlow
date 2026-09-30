@@ -15,6 +15,7 @@ function presentCustomer(customer: {
   email: string | null;
   phone: string | null;
   creditLimit: Prisma.Decimal;
+  stage: string;
   active: boolean;
   createdAt: Date;
 }) {
@@ -25,6 +26,7 @@ function presentCustomer(customer: {
     email: customer.email,
     phone: customer.phone,
     creditLimit: asNumber(customer.creditLimit),
+    stage: customer.stage,
     active: customer.active,
     createdAt: customer.createdAt,
   };
@@ -92,6 +94,26 @@ export class CustomersService {
       }
       throw error;
     }
+  }
+
+  async updateStage(id: string, stage: string, actor: AuthUser, ip: string | null) {
+    const allowed = ['LEAD', 'ATIVO', 'INADIMPLENTE', 'INATIVO'];
+    if (!allowed.includes(stage)) throw new DomainError('STAGE', 'Etapa de relacionamento desconhecida.');
+    return this.prisma.$transaction(async (tx) => {
+      const current = await tx.customer.findUnique({ where: { id } });
+      if (!current) throw new NotFoundException('Cliente não encontrado.');
+      const updated = await tx.customer.update({ where: { id }, data: { stage } });
+      await this.audit.record(tx, {
+        userId: actor.id,
+        action: 'CUSTOMER_STAGE_CHANGED',
+        entity: 'Customer',
+        entityId: id,
+        oldValue: { stage: current.stage },
+        newValue: { stage },
+        ip,
+      });
+      return presentCustomer(updated);
+    });
   }
 
   async updateLimit(id: string, creditLimit: number, actor: AuthUser, ip: string | null) {

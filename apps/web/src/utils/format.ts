@@ -41,4 +41,10 @@ export const STATUS_LABEL: Record<string, string> = {
   PROCESSING: 'Processando',
   DONE: 'Concluído',
   FAILED: 'Falhou',
+  LEAD: 'Lead',
+  ATIVO: 'Ativo',
+  INADIMPLENTE: 'Inadimplente',
+  INATIVO: 'Inativo',
+  COM_ESTOQUE: 'Com estoque',
+  SEM_ESTOQUE: 'Sem estoque',
 };

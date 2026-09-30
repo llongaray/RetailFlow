@@ -8,6 +8,11 @@ async function login(page: import('@playwright/test').Page, email: string) {
   await expect(page.getByRole('heading', { name: 'Painel' })).toBeVisible();
 }
 
+async function logout(page: import('@playwright/test').Page) {
+  await page.getByTestId('session-menu').click();
+  await page.getByTestId('logout').click();
+}
+
 test('venda financiada da geladeira gera contrato e baixa estoque', async ({ page }) => {
   await login(page, 'lucas.ferreira@retailflow.local');
   await page.goto('/sales/new');
@@ -23,14 +28,14 @@ test('venda financiada da geladeira gera contrato e baixa estoque', async ({ pag
   await expect(page.getByTestId('sale-status')).toHaveText('Aguardando crédito');
   const saleUrl = page.url();
 
-  await page.getByRole('button', { name: 'Sair' }).click();
+  await logout(page);
   await login(page, 'camila.nogueira@retailflow.local');
   await page.goto('/credit');
   await page.screenshot({ path: 'docs/images/fila-credito.png', fullPage: true });
   await page.getByRole('button', { name: 'Assumir' }).first().click();
   await page.getByRole('button', { name: 'Aprovar' }).first().click();
 
-  await page.getByRole('button', { name: 'Sair' }).click();
+  await logout(page);
   await login(page, 'lucas.ferreira@retailflow.local');
   await page.goto(saleUrl);
   await page.getByTestId('generate-contract').click();

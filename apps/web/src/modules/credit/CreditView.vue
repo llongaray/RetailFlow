@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import KanbanBoard, { type KanbanColumn } from '../../components/KanbanBoard.vue';
+import ViewSwitch from '../../components/ViewSwitch.vue';
 import { ApiError, api } from '../../services/http';
 import { useSession } from '../../stores/session';
 import type { Proposal } from '../../types';
@@ -9,6 +11,39 @@ const session = useSession();
 const proposals = ref<Proposal[]>([]);
 const error = ref('');
 const policyFlag = ref(false);
+const mode = ref<'table' | 'board'>('table');
+const statuses = ['SUBMITTED', 'UNDER_ANALYSIS', 'APPROVED', 'REJECTED', 'CONTRACTED'];
+const columns = computed<KanbanColumn[]>(() =>
+  statuses.map((status) => ({
+    id: status,
+    title: STATUS_LABEL[status] ?? status,
+    cards: proposals.value
+      .filter((proposal) => proposal.status === status)
+      .map((proposal) => ({
+        id: proposal.id,
+        title: proposal.customer.name,
+        detail: `${formatBRL(proposal.amount)} · ${proposal.installments}×`,
+        href: proposal.saleId ? `/sales/${proposal.saleId}` : undefined,
+      })),
+  })),
+);
+
+async function drop(payload: { id: string; from: string; to: string }) {
+  const action =
+    payload.from === 'SUBMITTED' && payload.to === 'UNDER_ANALYSIS'
+      ? 'start-analysis'
+      : payload.from === 'UNDER_ANALYSIS' && payload.to === 'APPROVED'
+        ? 'approve'
+        : payload.from === 'UNDER_ANALYSIS' && payload.to === 'REJECTED'
+          ? 'reject'
+          : null;
+  if (!action) {
+    session.notify('Esse movimento não é permitido.', 'error');
+    await load();
+    return;
+  }
+  await act(payload.id, action);
+}
 
 async function load() {
   proposals.value = await api<Proposal[]>('/api/v1/credit/proposals');
@@ -30,10 +65,14 @@ onMounted(load);
 </script>
 
 <template>
-  <header class="topbar"><div><h1>Crédito</h1><p>Quem vendeu não aprova a própria proposta.</p></div></header>
+  <header class="topbar">
+    <div><h1>Crédito</h1><p>Quem vendeu não aprova a própria proposta.</p></div>
+    <ViewSwitch v-model="mode" storage-key="rf-view-credit" />
+  </header>
   <p v-if="error">{{ error }}</p>
   <label v-if="session.can('credit.approve')" class="field"><input v-model="policyFlag" type="checkbox" /> Confirmo a política adicional acima do limite de gerente</label>
-  <section class="card">
+  <KanbanBoard v-if="mode === 'board'" :columns="columns" @move="drop" />
+  <section v-else class="card">
     <table class="table">
       <thead><tr><th>Cliente</th><th>Valor</th><th>Parcelas</th><th>Status</th><th></th></tr></thead>
       <tbody>

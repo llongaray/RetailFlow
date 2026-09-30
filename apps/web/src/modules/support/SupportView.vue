@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import KanbanBoard, { type KanbanColumn } from '../../components/KanbanBoard.vue';
 import Modal from '../../components/Modal.vue';
+import ViewSwitch from '../../components/ViewSwitch.vue';
 import { api } from '../../services/http';
 import { useSession } from '../../stores/session';
 import type { Customer, Ticket } from '../../types';
@@ -11,6 +13,17 @@ const tickets = ref<Ticket[]>([]);
 const customers = ref<Customer[]>([]);
 const form = ref({ customerId: '', subject: '', description: '' });
 const createOpen = ref(false);
+const mode = ref<'table' | 'board'>('table');
+const statuses = ['OPEN', 'IN_PROGRESS', 'RESOLVED'];
+const columns = computed<KanbanColumn[]>(() =>
+  statuses.map((status) => ({
+    id: status,
+    title: STATUS_LABEL[status] ?? status,
+    cards: tickets.value
+      .filter((ticket) => ticket.status === status)
+      .map((ticket) => ({ id: ticket.id, title: ticket.subject, detail: ticket.customerName })),
+  })),
+);
 
 async function load() {
   tickets.value = await api<Ticket[]>('/api/v1/support/tickets');
@@ -30,15 +43,31 @@ async function move(id: string, status: string) {
   await load();
 }
 
+async function drop(payload: { id: string; from: string; to: string }) {
+  const legal =
+    (payload.from === 'OPEN' && (payload.to === 'IN_PROGRESS' || payload.to === 'RESOLVED')) ||
+    (payload.from === 'IN_PROGRESS' && payload.to === 'RESOLVED');
+  if (!legal) {
+    session.notify('Esse movimento não é permitido.', 'error');
+    await load();
+    return;
+  }
+  await move(payload.id, payload.to);
+}
+
 onMounted(load);
 </script>
 
 <template>
   <header class="topbar">
     <div><h1>Atendimento</h1><p>Histórico fica ligado ao cliente.</p></div>
-    <button v-if="session.can('support.write')" class="btn primary" type="button" @click="createOpen = true">Novo ticket</button>
+    <div class="row">
+      <ViewSwitch v-model="mode" storage-key="rf-view-support" />
+      <button v-if="session.can('support.write')" class="btn primary" type="button" @click="createOpen = true">Novo ticket</button>
+    </div>
   </header>
-  <article class="card">
+  <KanbanBoard v-if="mode === 'board'" :columns="columns" @move="drop" />
+  <article v-else class="card">
     <table class="table">
       <thead><tr><th>Cliente</th><th>Assunto</th><th>Status</th><th></th></tr></thead>
       <tbody>

@@ -18,6 +18,7 @@ export type Customer = {
   email: string | null;
   phone: string | null;
   creditLimit: number;
+  stage: string;
   active: boolean;
 };
 
