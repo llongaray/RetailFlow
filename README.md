@@ -89,3 +89,5 @@ Os testes de integração e o Playwright precisam do SQL Server, da API e do pai
 ![Fila de crédito](docs/images/fila-credito.png)
 
 ![Contrato](docs/images/contrato.png)
+
+Sistema feito com auxilio de IA (Este é um projeto que demonstra as habilidade em vue e node.js a ia foi usada apenas para agilizar o processo).
