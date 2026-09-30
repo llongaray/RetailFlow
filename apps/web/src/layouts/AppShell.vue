@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import NavIcon from '../components/NavIcon.vue';
 import { useSession } from '../stores/session';
 import { ROLE_LABEL } from '../utils/format';
 
@@ -55,6 +56,7 @@ const visibleCategories = computed(() =>
 );
 
 const menuOpen = computed(() => (portrait.value ? drawer.value : !collapsed.value));
+const iconOnly = computed(() => !portrait.value && collapsed.value);
 
 function syncPortrait() {
   portrait.value = portraitQuery.matches;
@@ -93,13 +95,15 @@ function logout() {
           <small v-if="portrait || !collapsed">Varejo e crédito</small>
         </div>
         <nav class="nav">
-          <RouterLink v-for="link in visibleLoose" :key="link.to" :to="link.to" :title="link.label">
-            {{ portrait || !collapsed ? link.label : link.label.slice(0, 1) }}
+          <RouterLink v-for="link in visibleLoose" :key="link.to" :to="link.to" :title="link.label" :aria-label="link.label">
+            <NavIcon v-if="iconOnly" :name="link.to" />
+            <span v-else>{{ link.label }}</span>
           </RouterLink>
           <section v-for="category in visibleCategories" :key="category.id" class="nav-group">
             <h2 v-if="portrait || !collapsed">{{ category.label }}</h2>
-            <RouterLink v-for="link in category.links" :key="link.to" :to="link.to" :title="link.label">
-              {{ portrait || !collapsed ? link.label : link.label.slice(0, 1) }}
+            <RouterLink v-for="link in category.links" :key="link.to" :to="link.to" :title="link.label" :aria-label="link.label">
+              <NavIcon v-if="iconOnly" :name="link.to" />
+              <span v-else>{{ link.label }}</span>
             </RouterLink>
           </section>
         </nav>

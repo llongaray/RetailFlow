@@ -47,7 +47,7 @@ a { color: inherit; }
 .sidebar-scroll { height: 100%; overflow: auto; display: flex; flex-direction: column; gap: 22px; padding: 28px 28px 28px 16px; }
 .shell.collapsed .sidebar-scroll { padding-inline: 10px; }
 .shell.collapsed .brand { font-size: 1.15rem; text-align: center; }
-.shell.collapsed .nav a { text-align: center; padding-inline: 0; }
+.shell.collapsed .nav a { display: grid; place-items: center; width: 40px; height: 40px; margin-inline: auto; padding: 0; }
 .nav-group { display: grid; gap: 4px; margin-top: 14px; }
 .nav-group h2 { margin: 0 0 4px; color: var(--brand-muted); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; font-family: Manrope, sans-serif; }
 .view-switch { display: flex; gap: 8px; }
@@ -64,6 +64,7 @@ a { color: inherit; }
 .brand small { display: block; margin-top: 4px; color: var(--brand-muted); font-family: Manrope, sans-serif; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; }
 .nav { display: flex; flex-direction: column; gap: 4px; }
 .nav a { text-decoration: none; border-radius: 10px; padding: 10px 12px; color: var(--sidebar-text); }
+.nav-icon { width: 20px; height: 20px; display: block; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
 .nav a.router-link-active, .nav a:hover { background: var(--sidebar-active); color: var(--field); }
 .sidebar .user { margin-top: auto; font-size: 0.92rem; }
 .sidebar .user strong { display: block; color: var(--field); }
@@ -117,7 +118,7 @@ a { color: inherit; }
   .sidebar { position: fixed; z-index: 20; top: 0; bottom: 0; left: 0; width: min(280px, 88vw); min-height: 0; transform: translateX(-105%); transition: transform 180ms ease; }
   .shell.drawer .sidebar { transform: none; }
   .sidebar-scroll, .shell.collapsed .sidebar-scroll { padding: 28px 18px 28px 16px; }
-  .shell.collapsed .nav a { text-align: left; padding: 10px 12px; }
+  .shell.collapsed .nav a { display: block; width: auto; height: auto; margin: 0; text-align: left; padding: 10px 12px; }
   .nav { flex-direction: column; overflow: visible; }
   .rail-toggle, .shell.collapsed .rail-toggle { position: fixed; top: 16px; left: 12px; }
   .shell.drawer .rail-toggle { top: 92px; left: calc(min(280px, 88vw) - 16px); }
