@@ -10,10 +10,16 @@ import { AuthService } from './auth.service';
       global: true,
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET') ?? 'dev-only-retailflow-secret',
-        signOptions: { expiresIn: 60 * 60 * 8 },
-      }),
+      useFactory: (config: ConfigService) => {
+        const secret = config.get<string>('JWT_SECRET');
+        if (!secret && config.get<string>('NODE_ENV') === 'production') {
+          throw new Error('JWT_SECRET é obrigatório em produção.');
+        }
+        return {
+          secret: secret || 'dev-only-retailflow-secret',
+          signOptions: { expiresIn: 60 * 60 * 8 },
+        };
+      },
     }),
   ],
   controllers: [AuthController],

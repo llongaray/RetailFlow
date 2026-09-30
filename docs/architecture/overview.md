@@ -4,6 +4,8 @@ O RetailFlow é um monólito modular. Os módulos de negócio ficam em `apps/api
 
 A baixa de estoque e a gravação da venda ou do contrato ocorrem na mesma transação. Detalhes nas ADRs em `docs/adr`.
 
+A v2 mantém o monólito modular de `docs/adr/0001-monolito-modular.md`. O painel ganhou paleta, fontes e modal, e a API ganhou cabeçalhos de segurança. Nenhum módulo virou serviço separado.
+
 ## API
 
 `base_dir`: `apps/api`.

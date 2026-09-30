@@ -4,12 +4,14 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import type { NextFunction, Request, Response } from 'express';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { startTelemetry } from './infrastructure/logging/telemetry';
 
 async function bootstrap() {
   await startTelemetry();
   const app = await NestFactory.create(AppModule);
+  app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
   app.setGlobalPrefix('api/v1');
   app.use((request: Request, response: Response, next: NextFunction) => {
     if ((request.method === 'GET' || request.method === 'HEAD') && request.path === '/') {
