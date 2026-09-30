@@ -272,6 +272,8 @@ model IntegrationProvider {
   name      String
   category  String
   available Boolean  @default(true)
+  enabled   Boolean  @default(false)
+  secret    String?  @db.NVarChar(Max)
   createdAt DateTime @default(now())
 
   @@map("integration_providers")
@@ -289,4 +291,45 @@ model IntegrationJob {
 
   @@index([status])
   @@map("integration_jobs")
+}
+
+model Company {
+  id         String   @id @default("company")
+  name       String
+  logoSquare String?
+  logoWide   String?
+  logoStory  String?
+  updatedAt  DateTime @updatedAt
+
+  @@map("companies")
+}
+
+model PaymentOption {
+  id     String  @id @default(uuid())
+  code   String  @unique
+  name   String
+  active Boolean @default(true)
+
+  @@map("payment_options")
+}
+
+model Supplier {
+  id        String   @id @default(uuid())
+  name      String
+  document  String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@map("suppliers")
+}
+
+model PartnerApiKey {
+  id        String   @id @default(uuid())
+  name      String
+  tokenHash String   @unique
+  prefix    String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@map("partner_api_keys")
 }

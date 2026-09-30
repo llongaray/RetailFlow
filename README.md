@@ -21,7 +21,8 @@ GraphQL existe só para o consolidado gerencial. O restante da operação é RES
 | Subpasta | Conteúdo |
 | --- | --- |
 | `apps/api` | API NestJS, Prisma e testes de domínio |
-| `apps/web` | Painel Vue 3 |
+| `apps/web` | Painel Vue 3 na porta 5173 |
+| `apps/admin` | Admin Vue na porta 5174, só o superusuário |
 | `packages/types` | Contratos compartilhados entre API e painel |
 | `docs/adr` | Decisões de arquitetura |
 | `docs/design` | Paleta e fontes do painel |
@@ -41,8 +42,8 @@ Na raiz também ficam `docker-compose.yml` (SQL Server e Redis), `package.json` 
 3. `npm install`
 4. `docker compose up -d`
 5. `npm run db:setup`
-6. `npm run dev:api` e, em outro terminal, `npm run dev:web`
-7. Abra `http://localhost:5173`
+6. `npm run dev:api` e, em outro terminal, `npm run dev:web`. O admin é `npm run dev:admin`.
+7. Abra `http://localhost:5173`. O admin fica em `http://localhost:5174` e só entra com `SUPERUSER_EMAIL`.
 
 Senha de todos os usuários de demonstração: `RetailFlow#2026`
 

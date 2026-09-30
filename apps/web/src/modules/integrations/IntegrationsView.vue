@@ -6,7 +6,7 @@ import { api } from '../../services/http';
 import { STATUS_LABEL } from '../../utils/format';
 
 type Job = { id: string; type: string; status: string; attempts: number; lastError: string | null; createdAt: string };
-type Provider = { id: string; code: string; name: string; category: string; available: boolean };
+type Provider = { id: string; code: string; name: string; category: string; available: boolean; enabled?: boolean };
 
 const jobs = ref<Job[]>([]);
 const providers = ref<Provider[]>([]);
@@ -32,7 +32,7 @@ const catalogColumns = computed<KanbanColumn[]>(() =>
       .map((provider) => ({
         id: provider.id,
         title: provider.name,
-        detail: provider.available ? 'Disponível para ligar' : 'Indisponível',
+        detail: `${provider.available ? 'Disponível' : 'Indisponível'}${provider.enabled ? ' · ligado' : ''}`,
       })),
   })),
 );
@@ -58,12 +58,13 @@ onMounted(async () => {
     <KanbanBoard v-if="catalogMode === 'board'" :columns="catalogColumns" readonly />
     <article v-else class="card">
       <table class="table">
-        <thead><tr><th>Nome</th><th>Categoria</th><th>Ligação</th></tr></thead>
+        <thead><tr><th>Nome</th><th>Categoria</th><th>Ligação</th><th>Estado</th></tr></thead>
         <tbody>
           <tr v-for="provider in providers" :key="provider.id">
             <td>{{ provider.name }}</td>
             <td>{{ STATUS_LABEL[provider.category] ?? provider.category }}</td>
             <td>{{ provider.available ? 'Disponível' : 'Indisponível' }}</td>
+            <td>{{ provider.enabled ? 'Ligado' : 'Desligado' }}</td>
           </tr>
         </tbody>
       </table>

@@ -12,7 +12,9 @@ import { AuditModule } from './infrastructure/audit/audit.module';
 import { PrismaModule } from './infrastructure/database/prisma.module';
 import { loadRootEnv } from './load-env';
 import { AuditLogModule } from './modules/audit/audit.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { CompanyModule } from './modules/company/company.module';
 import { ContractsModule } from './modules/contracts/contracts.module';
 import { CreditModule } from './modules/credit/credit.module';
 import { CustomersModule } from './modules/customers/customers.module';
@@ -21,6 +23,7 @@ import { HealthModule } from './modules/health/health.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
 import { MetricsModule } from './modules/metrics/metrics.module';
+import { PartnerModule } from './modules/partner/partner.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { ProductsModule } from './modules/products/products.module';
 import { SalesModule } from './modules/sales/sales.module';
@@ -38,6 +41,9 @@ loadRootEnv();
     AuditModule,
     MetricsModule,
     AuthModule,
+    AdminModule,
+    CompanyModule,
+    PartnerModule,
     HealthModule,
     UsersModule,
     StoresModule,

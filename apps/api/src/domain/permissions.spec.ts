@@ -11,5 +11,7 @@ describe('RBAC', () => {
     expect(hasPermission('GERENTE', 'inventory.override')).toBe(false);
     expect(hasPermission('GERENTE', 'policy.update')).toBe(false);
     expect(hasPermission('ADMIN', 'policy.update')).toBe(true);
+    expect(hasPermission('SUPERUSER', 'sale.read')).toBe(false);
+    expect(hasPermission('SUPERUSER', 'credit.approve')).toBe(false);
   });
 });

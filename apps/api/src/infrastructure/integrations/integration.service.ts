@@ -55,6 +55,7 @@ export class IntegrationService implements OnModuleInit, OnModuleDestroy {
       name: provider.name,
       category: provider.category,
       available: provider.available,
+      enabled: provider.enabled,
     }));
   }
 

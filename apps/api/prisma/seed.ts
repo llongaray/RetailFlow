@@ -220,7 +220,30 @@ async function main() {
     { code: 'ORACLE', name: 'Oracle', category: 'LEGADO', available: true },
   ];
   for (const provider of providers) {
-    await prisma.integrationProvider.upsert({ where: { code: provider.code }, update: provider, create: provider });
+    await prisma.integrationProvider.upsert({
+      where: { code: provider.code },
+      update: { name: provider.name, category: provider.category, available: provider.available },
+      create: provider,
+    });
+  }
+  const payments = [
+    { code: 'CASH', name: 'À vista' },
+    { code: 'PIX', name: 'PIX' },
+    { code: 'CARD', name: 'Cartão' },
+    { code: 'FINANCED', name: 'Financiado' },
+  ];
+  for (const payment of payments) {
+    await prisma.paymentOption.upsert({ where: { code: payment.code }, update: { name: payment.name }, create: payment });
+  }
+  const superEmail = process.env.SUPERUSER_EMAIL?.trim().toLowerCase();
+  const superPassword = process.env.SUPERUSER_PASSWORD;
+  if (superEmail && superPassword) {
+    const existing = await prisma.user.findUnique({ where: { email: superEmail } });
+    if (!existing) {
+      await prisma.user.create({
+        data: { name: 'Superusuário', email: superEmail, passwordHash: await bcrypt.hash(superPassword, 10), role: 'SUPERUSER' },
+      });
+    }
   }
   await prisma.$disconnect();
 }

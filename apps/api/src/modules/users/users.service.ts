@@ -10,7 +10,11 @@ export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
   async list() {
-    const users = await this.prisma.user.findMany({ include: { store: true }, orderBy: { name: 'asc' } });
+    const users = await this.prisma.user.findMany({
+      where: { role: { not: 'SUPERUSER' } },
+      include: { store: true },
+      orderBy: { name: 'asc' },
+    });
     return users.map(presentUser);
   }
 

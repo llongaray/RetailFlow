@@ -21,7 +21,9 @@ async function bootstrap() {
     next();
   });
   const config = app.get(ConfigService);
-  app.enableCors({ origin: config.get<string>('WEB_ORIGIN') ?? 'http://localhost:5173' });
+  const webOrigin = config.get<string>('WEB_ORIGIN') ?? 'http://localhost:5173';
+  const adminOrigin = config.get<string>('ADMIN_ORIGIN') ?? 'http://localhost:5174';
+  app.enableCors({ origin: [webOrigin, adminOrigin] });
   app.use((request: Request & { requestId?: string }, response: Response, next: NextFunction) => {
     request.requestId = randomUUID();
     response.setHeader('x-request-id', request.requestId);

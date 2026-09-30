@@ -14,7 +14,7 @@ A v2 mantém o monólito modular de `docs/adr/0001-monolito-modular.md`. O paine
 | --- | --- |
 | `prisma` | Schema, migrations e seed |
 | `src/domain` | Regras puras: CPF, RBAC, estoque, venda, crédito, contrato e pagamento |
-| `src/modules` | `auth`, `users`, `stores`, `customers`, `products`, `inventory`, `sales`, `credit`, `contracts`, `payments`, `support`, `audit`, `dashboard`, `integrations`, `metrics`, `health` |
+| `src/modules` | `auth`, `users`, `stores`, `customers`, `products`, `inventory`, `sales`, `credit`, `contracts`, `payments`, `support`, `audit`, `dashboard`, `integrations`, `metrics`, `health`, `admin`, `company`, `partner` |
 | `src/infrastructure/database` | Cliente Prisma |
 | `src/infrastructure/audit` | Gravação de `audit_logs` na mesma transação |
 | `src/infrastructure/integrations` | Outbox, worker BullMQ e mock Oracle |
@@ -35,3 +35,7 @@ A v2 mantém o monólito modular de `docs/adr/0001-monolito-modular.md`. O paine
 | `services` | Cliente HTTP |
 | `modules` | `customers`, `products`, `sales`, `credit`, `support`, `audit`, `integrations`, `dashboard` |
 | `utils` | Formatação de moeda, CPF e status |
+
+## Admin
+
+`base_dir`: `apps/admin`. Vite na porta 5174. A API continua na 3000 e aceita `ADMIN_ORIGIN`. O superusuário nasce do `.env` e não entra no painel da loja. Logos ficam em `uploads/`, fora do git. A chave de parceiro lê catálogo, clientes e vendas por `x-api-key` e não herda o papel da loja.
