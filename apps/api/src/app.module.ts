@@ -14,6 +14,9 @@ import { AuditLogModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { HealthModule } from './modules/health/health.module';
+import { InventoryModule } from './modules/inventory/inventory.module';
+import { ProductsModule } from './modules/products/products.module';
+import { SalesModule } from './modules/sales/sales.module';
 import { StoresModule } from './modules/stores/stores.module';
 import { UsersModule } from './modules/users/users.module';
 
@@ -30,6 +33,9 @@ loadRootEnv();
     UsersModule,
     StoresModule,
     CustomersModule,
+    ProductsModule,
+    InventoryModule,
+    SalesModule,
     AuditLogModule,
   ],
   providers: [
