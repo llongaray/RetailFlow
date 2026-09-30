@@ -12,6 +12,8 @@ import { PrismaModule } from './infrastructure/database/prisma.module';
 import { loadRootEnv } from './load-env';
 import { AuditLogModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { ContractsModule } from './modules/contracts/contracts.module';
+import { CreditModule } from './modules/credit/credit.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { HealthModule } from './modules/health/health.module';
 import { InventoryModule } from './modules/inventory/inventory.module';
@@ -36,6 +38,8 @@ loadRootEnv();
     ProductsModule,
     InventoryModule,
     SalesModule,
+    CreditModule,
+    ContractsModule,
     AuditLogModule,
   ],
   providers: [
