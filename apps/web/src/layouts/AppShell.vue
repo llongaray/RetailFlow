@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSession } from '../stores/session';
 import { ROLE_LABEL } from '../utils/format';
@@ -10,7 +10,10 @@ const session = useSession();
 const route = useRoute();
 const router = useRouter();
 const collapsed = ref(localStorage.getItem('rf-sidebar') === 'collapsed');
+const portrait = ref(false);
+const drawer = ref(false);
 const userOpen = ref(false);
+const portraitQuery = window.matchMedia('(max-width: 980px)');
 
 const loose: Link[] = [
   { to: '/', label: 'Painel', permission: 'dashboard.read' },
@@ -51,7 +54,29 @@ const visibleCategories = computed(() =>
     .filter((category) => category.links.length),
 );
 
+const menuOpen = computed(() => (portrait.value ? drawer.value : !collapsed.value));
+
+function syncPortrait() {
+  portrait.value = portraitQuery.matches;
+  if (!portraitQuery.matches) drawer.value = false;
+}
+
+function toggleMenu() {
+  if (portrait.value) drawer.value = !drawer.value;
+  else collapsed.value = !collapsed.value;
+}
+
 watch(collapsed, (value) => localStorage.setItem('rf-sidebar', value ? 'collapsed' : 'open'));
+watch(() => route.fullPath, () => {
+  drawer.value = false;
+  userOpen.value = false;
+});
+
+onMounted(() => {
+  syncPortrait();
+  portraitQuery.addEventListener('change', syncPortrait);
+});
+onBeforeUnmount(() => portraitQuery.removeEventListener('change', syncPortrait));
 
 function logout() {
   session.logout();
@@ -60,35 +85,49 @@ function logout() {
 </script>
 
 <template>
-  <div class="shell" :class="{ collapsed }">
-    <header class="tophead">
-      <button class="btn" type="button" @click="collapsed = !collapsed">{{ collapsed ? 'Expandir' : 'Recuar' }}</button>
-      <div class="usermenu">
-        <button class="btn" type="button" data-testid="session-menu" @click="userOpen = !userOpen">
-          {{ session.user?.name }}
-          <small>{{ ROLE_LABEL[session.user?.role ?? ''] }}</small>
-        </button>
-        <div v-if="userOpen" class="userpop">
-          <p v-if="session.user?.storeName">{{ session.user.storeName }}</p>
-          <button class="btn" type="button" data-testid="logout" @click="logout">Sair</button>
+  <div class="shell" :class="{ collapsed, drawer }">
+    <aside class="sidebar">
+      <div class="sidebar-scroll">
+        <div class="brand">
+          {{ portrait || !collapsed ? 'RetailFlow' : 'RF' }}
+          <small v-if="portrait || !collapsed">Varejo e crédito</small>
         </div>
-      </div>
-    </header>
-    <div class="frame">
-      <aside class="sidebar">
-        <div class="brand">RetailFlow<small v-if="!collapsed">Varejo e crédito</small></div>
         <nav class="nav">
           <RouterLink v-for="link in visibleLoose" :key="link.to" :to="link.to" :title="link.label">
-            {{ collapsed ? link.label.slice(0, 1) : link.label }}
+            {{ portrait || !collapsed ? link.label : link.label.slice(0, 1) }}
           </RouterLink>
           <section v-for="category in visibleCategories" :key="category.id" class="nav-group">
-            <h2 v-if="!collapsed">{{ category.label }}</h2>
+            <h2 v-if="portrait || !collapsed">{{ category.label }}</h2>
             <RouterLink v-for="link in category.links" :key="link.to" :to="link.to" :title="link.label">
-              {{ collapsed ? link.label.slice(0, 1) : link.label }}
+              {{ portrait || !collapsed ? link.label : link.label.slice(0, 1) }}
             </RouterLink>
           </section>
         </nav>
-      </aside>
+      </div>
+    </aside>
+    <button
+      class="rail-toggle"
+      type="button"
+      :aria-expanded="menuOpen"
+      :aria-label="menuOpen ? 'Recuar menu' : 'Expandir menu'"
+      @click="toggleMenu"
+    >
+      {{ menuOpen ? '‹' : '›' }}
+    </button>
+    <div v-if="portrait && drawer" class="drawer-back" @click="drawer = false" />
+    <div class="column">
+      <header class="tophead">
+        <div class="usermenu">
+          <button class="btn" type="button" data-testid="session-menu" @click="userOpen = !userOpen">
+            {{ session.user?.name }}
+            <small>{{ ROLE_LABEL[session.user?.role ?? ''] }}</small>
+          </button>
+          <div v-if="userOpen" class="userpop">
+            <p v-if="session.user?.storeName">{{ session.user.storeName }}</p>
+            <button class="btn" type="button" data-testid="logout" @click="logout">Sair</button>
+          </div>
+        </div>
+      </header>
       <main class="workspace">
         <div :key="route.fullPath" v-motion :initial="{ opacity: 0, y: 10 }" :enter="{ opacity: 1, y: 0 }">
           <slot />
