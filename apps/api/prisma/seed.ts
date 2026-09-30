@@ -158,6 +158,70 @@ async function main() {
       },
     });
   }
+  const boardCustomers = [
+    { name: 'Beatriz Lima', cpf: cpfFromBase('111444777'), phone: '51988880001', creditLimit: 1500, stage: 'LEAD' },
+    { name: 'Paulo Rocha', cpf: cpfFromBase('286255278'), phone: '51988880002', creditLimit: 900, stage: 'INADIMPLENTE' },
+    { name: 'Diego Santos', cpf: cpfFromBase('847163290'), phone: '51988880003', creditLimit: 6000, stage: 'ATIVO' },
+    { name: 'Lívia Nunes', cpf: cpfFromBase('123456789'), phone: '51988880004', creditLimit: 0, stage: 'INATIVO' },
+  ];
+  for (const customer of boardCustomers) {
+    await prisma.customer.upsert({
+      where: { cpf: customer.cpf },
+      update: { name: customer.name, phone: customer.phone, creditLimit: customer.creditLimit },
+      create: customer,
+    });
+  }
+  const beatriz = await prisma.customer.findUniqueOrThrow({ where: { cpf: boardCustomers[0].cpf } });
+  const paulo = await prisma.customer.findUniqueOrThrow({ where: { cpf: boardCustomers[1].cpf } });
+  const diego = await prisma.customer.findUniqueOrThrow({ where: { cpf: boardCustomers[2].cpf } });
+  const tickets = [
+    { customerId: beatriz.id, subject: 'Primeiro contato do lead', description: 'Beatriz pediu o catálogo de geladeiras.', status: 'OPEN' },
+    { customerId: paulo.id, subject: 'Parcela em atraso', description: 'Paulo quer negociar a parcela vencida.', status: 'IN_PROGRESS' },
+    { customerId: diego.id, subject: 'Troca da lavadora', description: 'Diego confirmou que a troca foi concluída.', status: 'RESOLVED' },
+  ];
+  for (const ticket of tickets) {
+    const existing = await prisma.supportTicket.findFirst({ where: { customerId: ticket.customerId, subject: ticket.subject } });
+    if (!existing) {
+      await prisma.supportTicket.create({ data: { ...ticket, openedById: attendant.id } });
+    }
+  }
+  const proposals = [
+    { customerId: beatriz.id, amount: 1899.9, installments: 8, status: 'SUBMITTED' },
+    { customerId: paulo.id, amount: 2499, installments: 12, status: 'UNDER_ANALYSIS' },
+    { customerId: diego.id, amount: 3500, installments: 10, status: 'APPROVED' },
+    { customerId: marina.id, amount: 900, installments: 3, status: 'REJECTED', rejectionReason: 'Renda incompatível com a parcela.' },
+  ];
+  for (const proposal of proposals) {
+    const existing = await prisma.creditProposal.findFirst({
+      where: { customerId: proposal.customerId, installments: proposal.installments, status: proposal.status },
+    });
+    if (existing) continue;
+    const quote = buildInstallments(proposal.amount, proposal.installments, 0.0199, new Date('2026-09-30T12:00:00Z'));
+    await prisma.creditProposal.create({
+      data: {
+        customerId: proposal.customerId,
+        storeId: poa.id,
+        sellerId: seller.id,
+        amount: proposal.amount,
+        installments: proposal.installments,
+        installmentAmount: quote.installmentAmount,
+        financedTotal: quote.total,
+        monthlyInterestRate: 0.0199,
+        status: proposal.status,
+        rejectionReason: proposal.rejectionReason ?? null,
+      },
+    });
+  }
+  const providers = [
+    { code: 'GOOGLE_ADS', name: 'Google Ads', category: 'ADS', available: true },
+    { code: 'META_ADS', name: 'Meta Ads', category: 'ADS', available: true },
+    { code: 'OPENAI', name: 'OpenAI', category: 'IA', available: true },
+    { code: 'GEMINI', name: 'Gemini', category: 'IA', available: true },
+    { code: 'ORACLE', name: 'Oracle', category: 'LEGADO', available: true },
+  ];
+  for (const provider of providers) {
+    await prisma.integrationProvider.upsert({ where: { code: provider.code }, update: provider, create: provider });
+  }
   await prisma.$disconnect();
 }
 

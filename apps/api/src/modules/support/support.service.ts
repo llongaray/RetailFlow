@@ -20,6 +20,7 @@ export class SupportService {
       status: ticket.status,
       customerId: ticket.customerId,
       customerName: ticket.customer.name,
+      phone: ticket.customer.phone,
       openedBy: ticket.openedBy.name,
       createdAt: ticket.createdAt,
     }));
@@ -44,6 +45,7 @@ export class SupportService {
       description: ticket.description,
       status: ticket.status,
       customerName: ticket.customer.name,
+      phone: ticket.customer.phone,
       openedBy: ticket.openedBy.name,
       createdAt: ticket.createdAt,
     };

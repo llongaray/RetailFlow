@@ -18,7 +18,7 @@ const columns = computed<KanbanColumn[]>(() =>
       .map((sale) => ({
         id: sale.id,
         title: `#${sale.number} · ${sale.customer.name}`,
-        detail: formatBRL(sale.total),
+        detail: `${sale.store.name} · ${sale.items.map((item) => item.name).join(', ') || 'sem itens'} · ${formatBRL(sale.total)}`,
         href: `/sales/${sale.id}`,
       })),
   })),
@@ -39,12 +39,13 @@ onMounted(async () => {
   <KanbanBoard v-if="mode === 'board'" :columns="columns" readonly />
   <section v-else class="card">
     <table class="table">
-      <thead><tr><th>Número</th><th>Cliente</th><th>Loja</th><th>Total</th><th>Status</th></tr></thead>
+      <thead><tr><th>Número</th><th>Cliente</th><th>Loja</th><th>Itens</th><th>Total</th><th>Status</th></tr></thead>
       <tbody>
         <tr v-for="sale in sales" :key="sale.id">
           <td><RouterLink :to="`/sales/${sale.id}`">#{{ sale.number }}</RouterLink></td>
           <td>{{ sale.customer.name }}</td>
           <td>{{ sale.store.name }}</td>
+          <td>{{ sale.items.map((item) => `${item.quantity}× ${item.name}`).join(', ') }}</td>
           <td>{{ formatBRL(sale.total) }}</td>
           <td><span class="pill" :data-status="sale.status">{{ STATUS_LABEL[sale.status] ?? sale.status }}</span></td>
         </tr>

@@ -47,4 +47,9 @@ export const STATUS_LABEL: Record<string, string> = {
   INATIVO: 'Inativo',
   COM_ESTOQUE: 'Com estoque',
   SEM_ESTOQUE: 'Sem estoque',
+  ADS: 'Anúncios',
+  IA: 'IA',
+  LEGADO: 'Legado',
+  PAGAMENTO: 'Pagamento',
+  FORNECEDOR: 'Fornecedor',
 };

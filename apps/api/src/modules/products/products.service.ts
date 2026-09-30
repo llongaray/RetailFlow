@@ -18,6 +18,7 @@ export class ProductsService {
       name: product.name,
       description: product.description,
       price: asNumber(product.price),
+      networkStock: product.inventory.reduce((sum, row) => sum + row.quantity, 0),
       stock: product.inventory
         .filter((row) => !storeId || row.storeId === storeId)
         .map((row) => ({ storeId: row.storeId, storeName: row.store.name, quantity: row.quantity })),

@@ -47,6 +47,17 @@ export class IntegrationService implements OnModuleInit, OnModuleDestroy {
     await this.queue?.close().catch(() => undefined);
   }
 
+  async catalog() {
+    const providers = await this.prisma.integrationProvider.findMany({ orderBy: { name: 'asc' } });
+    return providers.map((provider) => ({
+      id: provider.id,
+      code: provider.code,
+      name: provider.name,
+      category: provider.category,
+      available: provider.available,
+    }));
+  }
+
   async list() {
     const jobs = await this.prisma.integrationJob.findMany({ orderBy: { createdAt: 'desc' }, take: 50 });
     return jobs.map((job) => ({

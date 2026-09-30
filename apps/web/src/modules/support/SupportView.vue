@@ -21,7 +21,7 @@ const columns = computed<KanbanColumn[]>(() =>
     title: STATUS_LABEL[status] ?? status,
     cards: tickets.value
       .filter((ticket) => ticket.status === status)
-      .map((ticket) => ({ id: ticket.id, title: ticket.subject, detail: ticket.customerName })),
+      .map((ticket) => ({ id: ticket.id, title: ticket.subject, detail: `${ticket.customerName}${ticket.phone ? ` · ${ticket.phone}` : ''}` })),
   })),
 );
 
@@ -69,10 +69,11 @@ onMounted(load);
   <KanbanBoard v-if="mode === 'board'" :columns="columns" @move="drop" />
   <article v-else class="card">
     <table class="table">
-      <thead><tr><th>Cliente</th><th>Assunto</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th>Cliente</th><th>Telefone</th><th>Assunto</th><th>Status</th><th></th></tr></thead>
       <tbody>
         <tr v-for="ticket in tickets" :key="ticket.id" v-motion :hovered="{ backgroundColor: 'var(--row-hover)' }">
           <td>{{ ticket.customerName }}</td>
+          <td>{{ ticket.phone || '—' }}</td>
           <td>{{ ticket.subject }}</td>
           <td><span class="pill" :data-status="ticket.status">{{ STATUS_LABEL[ticket.status] }}</span></td>
           <td>

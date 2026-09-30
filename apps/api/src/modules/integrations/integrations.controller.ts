@@ -11,4 +11,10 @@ export class IntegrationsController {
   list() {
     return this.integrations.list();
   }
+
+  @Get('providers')
+  @Permissions('audit.read')
+  catalog() {
+    return this.integrations.catalog();
+  }
 }

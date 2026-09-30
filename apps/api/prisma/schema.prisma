@@ -266,6 +266,17 @@ model CreditPolicy {
   @@map("credit_policies")
 }
 
+model IntegrationProvider {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  category  String
+  available Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@map("integration_providers")
+}
+
 model IntegrationJob {
   id        String   @id @default(uuid())
   type      String

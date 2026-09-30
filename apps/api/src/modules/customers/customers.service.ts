@@ -45,10 +45,31 @@ export class CustomersService {
       where: term
         ? { OR: [{ name: { contains: term } }, { cpf: { contains: term.replace(/\D/g, '') } }] }
         : undefined,
+      include: {
+        sales: { orderBy: { createdAt: 'desc' }, take: 1 },
+        _count: {
+          select: {
+            proposals: true,
+            tickets: { where: { status: { in: ['OPEN', 'IN_PROGRESS'] } } },
+          },
+        },
+      },
       orderBy: { name: 'asc' },
       take: 50,
     });
-    return customers.map(presentCustomer);
+    return customers.map((customer) => ({
+      ...presentCustomer(customer),
+      proposalCount: customer._count.proposals,
+      openTickets: customer._count.tickets,
+      lastPurchase: customer.sales[0]
+        ? {
+            id: customer.sales[0].id,
+            number: customer.sales[0].number,
+            total: asNumber(customer.sales[0].total),
+            createdAt: customer.sales[0].createdAt,
+          }
+        : null,
+    }));
   }
 
   async get(id: string) {

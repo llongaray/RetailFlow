@@ -22,7 +22,11 @@ const columns = computed<KanbanColumn[]>(() =>
     title: STATUS_LABEL[stage] ?? stage,
     cards: customers.value
       .filter((customer) => (customer.stage || 'ATIVO') === stage)
-      .map((customer) => ({ id: customer.id, title: customer.name, detail: formatCpf(customer.cpf) })),
+      .map((customer) => ({
+        id: customer.id,
+        title: customer.name,
+        detail: `${formatCpf(customer.cpf)} · ${customer.openTickets ?? 0} tickets · ${customer.lastPurchase ? `compra #${customer.lastPurchase.number}` : 'sem compra'}`,
+      })),
   })),
 );
 
@@ -72,10 +76,10 @@ onMounted(load);
       <button class="btn" type="submit">Buscar</button>
     </form>
     <table class="table">
-        <thead><tr><th>Nome</th><th>CPF</th><th>Etapa</th><th>Limite</th></tr></thead>
+        <thead><tr><th>Nome</th><th>CPF</th><th>Etapa</th><th>Limite</th><th>Última compra</th><th>Propostas</th><th>Tickets</th></tr></thead>
       <tbody>
         <tr v-for="customer in customers" :key="customer.id" v-motion :hovered="{ backgroundColor: 'var(--row-hover)' }">
-          <td>{{ customer.name }}</td><td>{{ formatCpf(customer.cpf) }}</td><td>{{ STATUS_LABEL[customer.stage] ?? customer.stage }}</td><td>{{ formatBRL(customer.creditLimit) }}</td>
+          <td>{{ customer.name }}</td><td>{{ formatCpf(customer.cpf) }}</td><td>{{ STATUS_LABEL[customer.stage] ?? customer.stage }}</td><td>{{ formatBRL(customer.creditLimit) }}</td><td>{{ customer.lastPurchase ? `#${customer.lastPurchase.number} · ${formatBRL(customer.lastPurchase.total)}` : '—' }}</td><td>{{ customer.proposalCount ?? 0 }}</td><td>{{ customer.openTickets ?? 0 }}</td>
         </tr>
       </tbody>
     </table>

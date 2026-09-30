@@ -20,6 +20,9 @@ export type Customer = {
   creditLimit: number;
   stage: string;
   active: boolean;
+  proposalCount?: number;
+  openTickets?: number;
+  lastPurchase?: { id: string; number: number; total: number; createdAt: string } | null;
 };
 
 export type Store = { id: string; code: string; name: string; city: string; active: boolean };
@@ -30,6 +33,7 @@ export type Product = {
   name: string;
   description: string | null;
   price: number;
+  networkStock: number;
   stock: { storeId: string; storeName: string; quantity: number }[];
 };
 
@@ -95,6 +99,7 @@ export type Ticket = {
   status: string;
   customerId?: string;
   customerName: string;
+  phone?: string | null;
   openedBy: string;
   createdAt: string;
 };
