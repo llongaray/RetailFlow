@@ -12,7 +12,8 @@ Não há subpastas. Cada regra mora num arquivo ao lado do teste:
 | `credit.rules.ts` | RN005, RN006, RN007 e RN014 |
 | `contract.rules.ts` | RN009 e RN012 |
 | `payment.rules.ts` | RN008 no estorno e RN013 |
-| `permissions.ts` | Papéis e permissões granulares |
+| `permissions.ts` | Papéis e permissões granulares da loja |
+| `logo.rules.ts` | Recortes 1:1, faixa 6:1 e 9:16 |
 
 | ID | Regra |
 | --- | --- |

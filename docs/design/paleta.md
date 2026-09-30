@@ -1,6 +1,6 @@
 # Paleta
 
-`base_dir`: `docs/design`. Esta página é a única lista de cores do RetailFlow. O painel só usa os tokens abaixo, em `apps/web/src/styles.css`.
+`base_dir`: `docs/design`. Esta página é a única lista de cores do RetailFlow. O painel usa os tokens abaixo em `apps/web/src/styles.css`. O admin repete a mesma lista em `apps/admin/src/styles.css`.
 
 | Token | Valor | Uso |
 | --- | --- | --- |

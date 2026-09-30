@@ -6,6 +6,8 @@ A baixa de estoque e a gravação da venda ou do contrato ocorrem na mesma trans
 
 A v2 mantém o monólito modular de `docs/adr/0001-monolito-modular.md`. O painel ganhou paleta, fontes e modal, e a API ganhou cabeçalhos de segurança. Nenhum módulo virou serviço separado.
 
+A v3 acrescenta um segundo Vue, o admin, na mesma API. O painel da loja ganha menu com categorias, recuo e quadro Dragula. O catálogo `integration_providers` lista conectores possíveis e não chama Google, Meta nem modelo de IA. A fila `integration_jobs` continua sendo o outbox do Oracle simulado.
+
 ## API
 
 `base_dir`: `apps/api`.
@@ -13,7 +15,7 @@ A v2 mantém o monólito modular de `docs/adr/0001-monolito-modular.md`. O paine
 | Subpasta | Conteúdo |
 | --- | --- |
 | `prisma` | Schema, migrations e seed |
-| `src/domain` | Regras puras: CPF, RBAC, estoque, venda, crédito, contrato e pagamento |
+| `src/domain` | Regras puras: CPF, RBAC, estoque, venda, crédito, contrato, pagamento e proporção de logo |
 | `src/modules` | `auth`, `users`, `stores`, `customers`, `products`, `inventory`, `sales`, `credit`, `contracts`, `payments`, `support`, `audit`, `dashboard`, `integrations`, `metrics`, `health`, `admin`, `company`, `partner` |
 | `src/infrastructure/database` | Cliente Prisma |
 | `src/infrastructure/audit` | Gravação de `audit_logs` na mesma transação |
@@ -27,8 +29,8 @@ A v2 mantém o monólito modular de `docs/adr/0001-monolito-modular.md`. O paine
 
 | Subpasta | Conteúdo |
 | --- | --- |
-| `components` | Modal flutuante dos formulários |
-| `views` | Login |
+| `components` | Modal, quadro Dragula, troca lista/quadro e ícones do menu |
+| `views` | Login e boas-vindas |
 | `layouts` | Casca do painel |
 | `router` | Rotas e permissão de tela |
 | `stores` | Sessão Pinia |

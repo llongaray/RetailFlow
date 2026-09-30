@@ -7,7 +7,7 @@ Tema: loja de varejo que também concede crédito. O título pode ter calor edit
 - Títulos: [Fraunces](https://fonts.google.com/specimen/Fraunces), só em manchete e marca. O eixo óptico deixa o título grande mais expressivo e o título de página ainda legível.
 - Interface: [Manrope](https://fonts.google.com/specimen/Manrope), em texto, botão, campo e tabela. Os vãos abertos separam `1`, `l` e `I`, o que importa no CPF e no valor da parcela.
 
-Carregamento em `apps/web/src/styles.css`, via Google Fonts, pesos 560 e 680 na Fraunces e 400–700 na Manrope.
+Carregamento em `apps/web/src/styles.css` e no admin em `apps/admin/src/styles.css`, via Google Fonts. No painel, Fraunces nos pesos 560 e 680 e Manrope de 400 a 700.
 
 ## O que foi comparado
 
