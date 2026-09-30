@@ -4,6 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": { "dev": "vite", "build": "vue-tsc -b && vite build", "lint": "eslint .", "test": "vitest run" },
-  "dependencies": { "pinia": "^2.3.1", "vue": "^3.5.13", "vue-router": "^4.5.1" },
+  "dependencies": { "@vueuse/core": "^13.9.0", "@vueuse/motion": "^3.0.3", "pinia": "^2.3.1", "vue": "^3.5.13", "vue-router": "^4.5.1" },
   "devDependencies": { "@types/node": "^22.10.1", "@vitejs/plugin-vue": "^5.2.1", "typescript": "^5.7.2", "vite": "^6.0.5", "vitest": "^3.2.4", "vue-tsc": "^2.2.0" }
 }

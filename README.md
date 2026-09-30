@@ -24,6 +24,7 @@ GraphQL existe só para o consolidado gerencial. O restante da operação é RES
 | `apps/web` | Painel Vue 3 |
 | `packages/types` | Contratos compartilhados entre API e painel |
 | `docs/adr` | Decisões de arquitetura |
+| `docs/design` | Paleta e fontes do painel |
 | `docs/architecture` | Visão técnica e mapa das pastas da API e do painel |
 | `docs/business-rules` | Regras RN001–RN014 e onde o código as implementa |
 | `docs/images` | Capturas do ponto de venda, da fila de crédito e do contrato |

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
+import Modal from '../../components/Modal.vue';
 import { ApiError, api } from '../../services/http';
 import { useSession } from '../../stores/session';
 import type { Sale } from '../../types';
@@ -12,6 +13,8 @@ const sale = ref<Sale | null>(null);
 const reason = ref('');
 const externalId = ref('');
 const cancelOpen = ref(false);
+const payOpen = ref(false);
+const payTarget = ref<{ id: string; amount: number; number: number } | null>(null);
 const error = ref('');
 
 async function load() {
@@ -36,14 +39,32 @@ async function contract() {
   await load();
 }
 
-async function pay(installmentId: string, amount: number) {
-  await api('/api/v1/payments', {
-    method: 'POST',
-    body: JSON.stringify({ installmentId, amount, externalTransactionId: externalId.value }),
-  });
+function openPay(item: { id: string; amount: number; number: number }) {
+  payTarget.value = item;
   externalId.value = '';
-  session.notify('Pagamento registrado.');
-  await load();
+  error.value = '';
+  payOpen.value = true;
+}
+
+async function pay() {
+  if (!payTarget.value) return;
+  error.value = '';
+  try {
+    await api('/api/v1/payments', {
+      method: 'POST',
+      body: JSON.stringify({
+        installmentId: payTarget.value.id,
+        amount: payTarget.value.amount,
+        externalTransactionId: externalId.value,
+      }),
+    });
+    payOpen.value = false;
+    externalId.value = '';
+    session.notify('Pagamento registrado.');
+    await load();
+  } catch (cause) {
+    error.value = cause instanceof ApiError ? cause.message : 'Falha ao registrar o pagamento.';
+  }
 }
 
 onMounted(load);
@@ -79,24 +100,35 @@ onMounted(load);
             <td>{{ formatDate(item.dueDate) }}</td>
             <td><span class="pill" :data-status="item.status">{{ STATUS_LABEL[item.status] ?? item.status }}</span></td>
             <td>
-              <button v-if="item.status === 'OPEN' && session.can('payment.create')" class="btn" type="button" @click="pay(item.id, item.amount)">Receber</button>
+              <button v-if="item.status === 'OPEN' && session.can('payment.create')" class="btn" type="button" @click="openPay(item)">Receber</button>
             </td>
           </tr>
         </tbody>
       </table>
-      <label v-if="session.can('payment.create')" class="field">Identificador externo do pagamento<input v-model="externalId" placeholder="ex. PIX-123" /></label>
     </article>
   </section>
-  <div v-if="cancelOpen" class="modal-back">
-    <form class="modal" @submit.prevent="cancel">
+  <Modal v-model="payOpen">
+    <form class="grid" @submit.prevent="pay">
+      <h2>Receber parcela {{ payTarget?.number }}</h2>
+      <p>{{ formatBRL(payTarget?.amount ?? 0) }}</p>
+      <label class="field">Identificador externo do pagamento<input v-model="externalId" placeholder="ex. PIX-123" required minlength="3" /></label>
+      <p v-if="error && payOpen">{{ error }}</p>
+      <div class="row">
+        <button class="btn" type="button" @click="payOpen = false">Voltar</button>
+        <button class="btn primary" type="submit">Confirmar pagamento</button>
+      </div>
+    </form>
+  </Modal>
+  <Modal v-model="cancelOpen">
+    <form class="grid" @submit.prevent="cancel">
       <h2>Cancelar venda #{{ sale?.number }}?</h2>
       <p>{{ sale?.customer.name }} · {{ formatBRL(sale?.total ?? 0) }}</p>
       <label class="field">Motivo<textarea v-model="reason" data-testid="cancel-reason" required /></label>
-      <p v-if="error">{{ error }}</p>
+      <p v-if="error && cancelOpen">{{ error }}</p>
       <div class="row">
         <button class="btn" type="button" @click="cancelOpen = false">Voltar</button>
         <button class="btn danger" type="submit">Confirmar cancelamento</button>
       </div>
     </form>
-  </div>
+  </Modal>
 </template>

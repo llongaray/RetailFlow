@@ -25,6 +25,7 @@ A baixa de estoque e a gravação da venda ou do contrato ocorrem na mesma trans
 
 | Subpasta | Conteúdo |
 | --- | --- |
+| `components` | Modal flutuante dos formulários |
 | `views` | Login |
 | `layouts` | Casca do painel |
 | `router` | Rotas e permissão de tela |

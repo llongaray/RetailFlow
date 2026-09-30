@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import Modal from '../../components/Modal.vue';
 import { ApiError, api } from '../../services/http';
 import { useSession } from '../../stores/session';
 import type { Customer, Product, Sale, Store } from '../../types';
@@ -141,8 +142,8 @@ async function submit() {
       <button class="btn primary" data-testid="sale-review" type="button" :disabled="!customer || !cart.length" @click="confirmOpen = true">Revisar</button>
     </aside>
   </div>
-  <div v-if="confirmOpen" class="modal-back">
-    <form class="modal" @submit.prevent="submit">
+  <Modal v-model="confirmOpen">
+    <form class="grid" @submit.prevent="submit">
       <h2>{{ method === 'CASH' ? 'Confirmar venda à vista' : 'Enviar proposta de crédito' }}</h2>
       <p>{{ customer?.name }} · {{ formatCpf(customer?.cpf ?? '') }}</p>
       <p>{{ formatBRL(total) }}</p>
@@ -152,5 +153,5 @@ async function submit() {
         <button class="btn primary" data-testid="sale-confirm" type="submit">Confirmar</button>
       </div>
     </form>
-  </div>
+  </Modal>
 </template>
