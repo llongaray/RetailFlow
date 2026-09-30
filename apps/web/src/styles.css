@@ -51,6 +51,7 @@ a { color: inherit; }
 .nav-group { display: grid; gap: 4px; margin-top: 14px; }
 .nav-group h2 { margin: 0 0 4px; color: var(--brand-muted); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; font-family: Manrope, sans-serif; }
 .view-switch { display: flex; gap: 8px; }
+.btn.icon { width: 40px; height: 40px; padding: 0; display: grid; place-items: center; }
 .view-switch .btn[aria-pressed='true'] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .kanban { display: flex; gap: 12px; overflow: auto; align-items: flex-start; padding-bottom: 8px; }
 .kanban-col { width: 240px; flex: 0 0 240px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 12px; }
