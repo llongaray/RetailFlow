@@ -1,9 +1,13 @@
 <script setup lang="ts">
+import { useQuery } from '@tanstack/vue-query';
+import { Bell, ChevronLeft, ChevronRight, Search } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import NavIcon from '../components/NavIcon.vue';
+import mark from '../imgs/favicon.ico';
+import { loadDashboard } from '../modules/dashboard/load';
 import { useSession } from '../stores/session';
 import { ROLE_LABEL } from '../utils/format';
+import NavIcon from '../components/NavIcon.vue';
 
 type Link = { to: string; label: string; permission?: string };
 
@@ -14,6 +18,8 @@ const collapsed = ref(localStorage.getItem('rf-sidebar') === 'collapsed');
 const portrait = ref(false);
 const drawer = ref(false);
 const userOpen = ref(false);
+const bellOpen = ref(false);
+const draft = ref(typeof route.query.q === 'string' && route.path === '/customers' ? route.query.q : '');
 const portraitQuery = window.matchMedia('(max-width: 980px)');
 
 const loose: Link[] = [
@@ -57,6 +63,27 @@ const visibleCategories = computed(() =>
 
 const menuOpen = computed(() => (portrait.value ? drawer.value : !collapsed.value));
 const iconOnly = computed(() => !portrait.value && collapsed.value);
+const initials = computed(() =>
+  (session.user?.name ?? '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join(''),
+);
+
+const alertsOn = computed(() => session.authenticated && session.can('dashboard.read'));
+const alerts = useQuery({
+  queryKey: ['dashboard'],
+  queryFn: loadDashboard,
+  enabled: alertsOn,
+});
+const counts = computed(() => alerts.data.value?.data);
+const badge = computed(() => {
+  const data = counts.value;
+  if (!data) return 0;
+  return data.pendingCredit + data.openTickets + data.lowStock;
+});
 
 function syncPortrait() {
   portrait.value = portraitQuery.matches;
@@ -68,22 +95,33 @@ function toggleMenu() {
   else collapsed.value = !collapsed.value;
 }
 
+function search() {
+  if (!session.can('customer.read')) return;
+  const term = draft.value.trim();
+  router.push({ path: '/customers', query: term ? { q: term } : {} });
+}
+
+function logout() {
+  session.logout();
+  router.push('/login');
+}
+
 watch(collapsed, (value) => localStorage.setItem('rf-sidebar', value ? 'collapsed' : 'open'));
-watch(() => route.fullPath, () => {
-  drawer.value = false;
-  userOpen.value = false;
-});
+watch(
+  () => route.fullPath,
+  () => {
+    drawer.value = false;
+    userOpen.value = false;
+    bellOpen.value = false;
+    if (route.path === '/customers') draft.value = typeof route.query.q === 'string' ? route.query.q : '';
+  },
+);
 
 onMounted(() => {
   syncPortrait();
   portraitQuery.addEventListener('change', syncPortrait);
 });
 onBeforeUnmount(() => portraitQuery.removeEventListener('change', syncPortrait));
-
-function logout() {
-  session.logout();
-  router.push('/login');
-}
 </script>
 
 <template>
@@ -91,22 +129,29 @@ function logout() {
     <aside class="sidebar">
       <div class="sidebar-scroll">
         <div class="brand">
-          {{ portrait || !collapsed ? 'RetailFlow' : 'RF' }}
-          <small v-if="portrait || !collapsed">Varejo e crédito</small>
+          <img :src="mark" alt="" />
+          <span v-if="!iconOnly">
+            RetailFlow
+            <small>Varejo e crédito</small>
+          </span>
         </div>
         <nav class="nav">
           <RouterLink v-for="link in visibleLoose" :key="link.to" :to="link.to" :title="link.label" :aria-label="link.label">
-            <NavIcon v-if="iconOnly" :name="link.to" />
-            <span v-else>{{ link.label }}</span>
+            <NavIcon :name="link.to" />
+            <span v-if="!iconOnly">{{ link.label }}</span>
           </RouterLink>
           <section v-for="category in visibleCategories" :key="category.id" class="nav-group">
-            <h2 v-if="portrait || !collapsed">{{ category.label }}</h2>
+            <h2 v-if="!iconOnly">{{ category.label }}</h2>
             <RouterLink v-for="link in category.links" :key="link.to" :to="link.to" :title="link.label" :aria-label="link.label">
-              <NavIcon v-if="iconOnly" :name="link.to" />
-              <span v-else>{{ link.label }}</span>
+              <NavIcon :name="link.to" />
+              <span v-if="!iconOnly">{{ link.label }}</span>
             </RouterLink>
           </section>
         </nav>
+        <div v-if="!iconOnly" class="promo">
+          <strong>Mais vendas com crédito inteligente</strong>
+          <p>A proposta nasce na venda e segue para análise sem sair do atendimento.</p>
+        </div>
       </div>
     </aside>
     <button
@@ -116,19 +161,42 @@ function logout() {
       :aria-label="menuOpen ? 'Recuar menu' : 'Expandir menu'"
       @click="toggleMenu"
     >
-      {{ menuOpen ? '‹' : '›' }}
+      <ChevronLeft v-if="menuOpen" class="nav-icon" :size="18" :stroke-width="1.75" aria-hidden="true" />
+      <ChevronRight v-else class="nav-icon" :size="18" :stroke-width="1.75" aria-hidden="true" />
     </button>
     <div v-if="portrait && drawer" class="drawer-back" @click="drawer = false" />
     <div class="column">
       <header class="tophead">
-        <div class="usermenu">
-          <button class="btn" type="button" data-testid="session-menu" @click="userOpen = !userOpen">
-            {{ session.user?.name }}
-            <small>{{ ROLE_LABEL[session.user?.role ?? ''] }}</small>
+        <form v-if="session.can('customer.read')" class="head-search" @submit.prevent="search">
+          <input v-model="draft" aria-label="Buscar cliente" placeholder="Buscar cliente" />
+          <button class="btn icon" type="submit" aria-label="Buscar" title="Buscar">
+            <Search class="nav-icon" :size="20" :stroke-width="1.75" aria-hidden="true" />
           </button>
-          <div v-if="userOpen" class="userpop">
-            <p v-if="session.user?.storeName">{{ session.user.storeName }}</p>
-            <button class="btn" type="button" data-testid="logout" @click="logout">Sair</button>
+        </form>
+        <div class="head-tools">
+          <div v-if="session.can('dashboard.read')" class="bell">
+            <button class="btn icon" type="button" aria-label="Pendências" title="Pendências" @click="bellOpen = !bellOpen">
+              <Bell class="nav-icon" :size="20" :stroke-width="1.75" aria-hidden="true" />
+              <span v-if="badge" class="badge">{{ badge }}</span>
+            </button>
+            <div v-if="bellOpen" class="userpop alert-list">
+              <RouterLink to="/credit">Crédito em análise <strong>{{ counts?.pendingCredit ?? 0 }}</strong></RouterLink>
+              <RouterLink to="/support">Tickets abertos <strong>{{ counts?.openTickets ?? 0 }}</strong></RouterLink>
+              <RouterLink to="/catalog">Estoque baixo <strong>{{ counts?.lowStock ?? 0 }}</strong></RouterLink>
+            </div>
+          </div>
+          <div class="usermenu">
+            <button class="btn session" type="button" data-testid="session-menu" @click="userOpen = !userOpen">
+              <span class="initials" aria-hidden="true">{{ initials }}</span>
+              <span>
+                {{ session.user?.name }}
+                <small>{{ ROLE_LABEL[session.user?.role ?? ''] }}</small>
+              </span>
+            </button>
+            <div v-if="userOpen" class="userpop">
+              <p v-if="session.user?.storeName">{{ session.user.storeName }}</p>
+              <button class="btn" type="button" data-testid="logout" @click="logout">Sair</button>
+            </div>
           </div>
         </div>
       </header>

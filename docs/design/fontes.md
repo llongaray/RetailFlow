@@ -1,5 +1,7 @@
 # Fontes
 
+Os endereços do painel, do admin e da API estão em [Acessos](../../README.md#acessos).
+
 Tema: loja de varejo que também concede crédito. O título pode ter calor editorial. Tabela, formulário e valor em reais precisam de números claros em corpo pequeno.
 
 ## Dupla adotada

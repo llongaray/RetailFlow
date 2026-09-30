@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onKeyStroke } from '@vueuse/core';
 
+defineProps<{ wide?: boolean }>();
 const open = defineModel<boolean>({ required: true });
 
 onKeyStroke('Escape', () => {
@@ -16,6 +17,7 @@ function backdrop(event: MouseEvent) {
   <div v-if="open" class="modal-back" @click="backdrop">
     <div
       class="modal"
+      :class="{ wide }"
       role="dialog"
       aria-modal="true"
       v-motion

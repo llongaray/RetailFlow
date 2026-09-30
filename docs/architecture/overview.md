@@ -8,6 +8,18 @@ A v2 mantém o monólito modular de `docs/adr/0001-monolito-modular.md`. O paine
 
 A v3 acrescenta um segundo Vue, o admin, na mesma API. O painel da loja ganha menu com categorias, recuo e quadro Dragula. O catálogo `integration_providers` lista conectores possíveis e não chama Google, Meta nem modelo de IA. A fila `integration_jobs` continua sendo o outbox do Oracle simulado.
 
+A v4 não cria endpoint. O painel passa a desenhar em cima das respostas que já existiam: Lucide no menu, TanStack Query em volta do cliente HTTP, TanStack Table nas listas, ECharts no consolidado e VeeValidate com Zod só no cadastro de cliente. O corpo do POST desse cadastro permanece `{ name, cpf, phone }`.
+
+## Acessos locais
+
+A lista completa, com Swagger, saúde, métricas, SQL Server e Redis, está em [Acessos](../../README.md#acessos).
+
+| Acesso | Endereço |
+| --- | --- |
+| Painel da loja | http://localhost:5173 |
+| Admin | http://localhost:5174 |
+| API | http://localhost:3000 |
+
 ## API
 
 `base_dir`: `apps/api`.
@@ -29,12 +41,12 @@ A v3 acrescenta um segundo Vue, o admin, na mesma API. O painel da loja ganha me
 
 | Subpasta | Conteúdo |
 | --- | --- |
-| `components` | Modal, quadro Dragula, troca lista/quadro e ícones do menu |
+| `components` | Modal, tabela com ordenação e paginação, faixa de resumo, quadro Dragula, troca lista/quadro e ícones Lucide |
 | `views` | Login e boas-vindas |
 | `layouts` | Casca do painel |
 | `router` | Rotas e permissão de tela |
 | `stores` | Sessão Pinia |
-| `services` | Cliente HTTP |
+| `services` | Cliente HTTP e o cache do TanStack Query |
 | `modules` | `customers`, `products`, `sales`, `credit`, `support`, `audit`, `integrations`, `dashboard` |
 | `utils` | Formatação de moeda, CPF e status |
 

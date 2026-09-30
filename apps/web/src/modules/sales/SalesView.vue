@@ -1,15 +1,54 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { useQuery } from '@tanstack/vue-query';
+import type { ColumnDef } from '@tanstack/vue-table';
+import { computed, h, ref } from 'vue';
+import { RouterLink } from 'vue-router';
+import DataTable from '../../components/DataTable.vue';
 import KanbanBoard, { type KanbanColumn } from '../../components/KanbanBoard.vue';
+import SummaryStrip from '../../components/SummaryStrip.vue';
 import ViewSwitch from '../../components/ViewSwitch.vue';
 import { api } from '../../services/http';
 import type { Sale } from '../../types';
 import { formatBRL, STATUS_LABEL } from '../../utils/format';
 
-const sales = ref<Sale[]>([]);
 const mode = ref<'table' | 'board'>('table');
 const statuses = ['PENDING_CREDIT', 'COMPLETED', 'CANCELLED'];
-const columns = computed<KanbanColumn[]>(() =>
+const list = useQuery({ queryKey: ['sales'], queryFn: () => api<Sale[]>('/api/v1/sales') });
+const sales = computed(() => list.data.value ?? []);
+
+const summary = computed(() => [
+  { label: 'Vendas', value: String(sales.value.length) },
+  { label: 'Volume', value: formatBRL(sales.value.reduce((sum, sale) => sum + sale.total, 0)) },
+  { label: 'Aguardando crédito', value: String(sales.value.filter((sale) => sale.status === 'PENDING_CREDIT').length) },
+  { label: 'Concluídas', value: String(sales.value.filter((sale) => sale.status === 'COMPLETED').length) },
+]);
+
+const columns: ColumnDef<Sale, unknown>[] = [
+  {
+    id: 'number',
+    header: 'Número',
+    accessorFn: (row) => row.number,
+    cell: ({ row }) => h(RouterLink, { to: `/sales/${row.original.id}` }, () => `#${row.original.number}`),
+  },
+  { id: 'customer', header: 'Cliente', accessorFn: (row) => row.customer.name },
+  { id: 'store', header: 'Loja', accessorFn: (row) => row.store.name },
+  { id: 'items', header: 'Itens', accessorFn: (row) => row.items.map((item) => `${item.quantity}× ${item.name}`).join(', ') },
+  { id: 'total', header: 'Total', accessorFn: (row) => row.total, cell: (info) => formatBRL(info.getValue<number>()) },
+  {
+    id: 'status',
+    header: 'Status',
+    accessorFn: (row) => STATUS_LABEL[row.status] ?? row.status,
+    cell: ({ row }) => h('span', { class: 'pill', 'data-status': row.original.status }, STATUS_LABEL[row.original.status] ?? row.original.status),
+  },
+];
+
+const facet = {
+  label: 'Status',
+  options: statuses.map((status) => ({ value: status, label: STATUS_LABEL[status] ?? status })),
+  match: (row: Sale, value: string) => row.status === value,
+};
+
+const board = computed<KanbanColumn[]>(() =>
   statuses.map((status) => ({
     id: status,
     title: STATUS_LABEL[status] ?? status,
@@ -23,9 +62,6 @@ const columns = computed<KanbanColumn[]>(() =>
       })),
   })),
 );
-onMounted(async () => {
-  sales.value = await api<Sale[]>('/api/v1/sales');
-});
 </script>
 
 <template>
@@ -36,21 +72,7 @@ onMounted(async () => {
       <RouterLink class="btn primary" to="/sales/new">Nova venda</RouterLink>
     </div>
   </header>
-  <KanbanBoard v-if="mode === 'board'" :columns="columns" readonly />
-  <section v-else class="card">
-    <table class="table">
-      <thead><tr><th>Número</th><th>Cliente</th><th>Loja</th><th>Itens</th><th>Total</th><th>Status</th></tr></thead>
-      <tbody>
-        <tr v-for="sale in sales" :key="sale.id">
-          <td><RouterLink :to="`/sales/${sale.id}`">#{{ sale.number }}</RouterLink></td>
-          <td>{{ sale.customer.name }}</td>
-          <td>{{ sale.store.name }}</td>
-          <td>{{ sale.items.map((item) => `${item.quantity}× ${item.name}`).join(', ') }}</td>
-          <td>{{ formatBRL(sale.total) }}</td>
-          <td><span class="pill" :data-status="sale.status">{{ STATUS_LABEL[sale.status] ?? sale.status }}</span></td>
-        </tr>
-      </tbody>
-    </table>
-    <p v-if="!sales.length" class="empty">Nenhuma venda registrada.</p>
-  </section>
+  <SummaryStrip :items="summary" />
+  <KanbanBoard v-if="mode === 'board'" :columns="board" readonly />
+  <DataTable v-else :rows="sales" :columns="columns" :facet="facet" :loading="list.isPending.value" filename="vendas.csv" />
 </template>

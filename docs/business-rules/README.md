@@ -1,5 +1,7 @@
 # Regras de negócio
 
+Os endereços do painel, do admin e da API estão em [Acessos](../../README.md#acessos).
+
 `base_dir`: `apps/api/src/domain`.
 
 Não há subpastas. Cada regra mora num arquivo ao lado do teste:

@@ -20,6 +20,7 @@ export type Customer = {
   creditLimit: number;
   stage: string;
   active: boolean;
+  createdAt: string;
   proposalCount?: number;
   openTickets?: number;
   lastPurchase?: { id: string; number: number; total: number; createdAt: string } | null;
