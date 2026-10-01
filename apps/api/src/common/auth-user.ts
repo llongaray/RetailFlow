@@ -1,5 +1,3 @@
-import type { Permission } from '../domain/permissions';
-
 export type AuthUser = {
   id: string;
   name: string;
@@ -7,5 +5,5 @@ export type AuthUser = {
   role: string;
   storeId: string | null;
   active: boolean;
-  permissions: Permission[];
+  permissions: string[];
 };

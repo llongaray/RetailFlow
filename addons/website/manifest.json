@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "name": "website",
+  "displayName": "Website",
+  "description": "Website institucional público integrado ao RetailFlow",
+  "version": "1.0.0",
+  "retailflowVersion": ">=6.0.0 <7.0.0",
+  "license": "AGPL-3.0-only",
+  "author": { "name": "RetailFlow", "url": "https://github.com/llongaray/RetailFlow" },
+  "entrypoints": {
+    "backend": "./dist/backend/index.js",
+    "frontend": "./frontend/index.ts",
+    "site": "./site/index.ts"
+  },
+  "dependencies": {},
+  "permissions": ["website.read", "website.update", "website.publish", "website.settings"],
+  "capabilities": ["backend", "panel", "public-site", "migrations", "ui-extensions"]
+}

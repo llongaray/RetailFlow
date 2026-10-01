@@ -8,6 +8,7 @@ import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { z } from 'zod';
 import DataTable from '../../components/DataTable.vue';
+import ExtensionSlot from '../../components/ExtensionSlot.vue';
 import KanbanBoard, { type KanbanColumn } from '../../components/KanbanBoard.vue';
 import Modal from '../../components/Modal.vue';
 import SummaryStrip from '../../components/SummaryStrip.vue';
@@ -201,6 +202,7 @@ watch(createOpen, (open) => {
       <button v-if="session.can('customer.create')" class="btn primary" type="button" @click="createOpen = true">Novo cliente</button>
     </div>
   </header>
+  <ExtensionSlot name="customer.details.tabs" />
   <SummaryStrip :items="summary" />
   <KanbanBoard v-if="mode === 'board'" :columns="columnsBoard" @move="move" />
   <template v-else>

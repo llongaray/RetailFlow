@@ -310,7 +310,8 @@ model Company {
   logoStory  String?
   updatedAt  DateTime @updatedAt
 
-  nuvemshop NuvemshopConnection?
+  nuvemshop    NuvemshopConnection?
+  installations AddonInstallation[]
 
   @@map("companies")
 }
@@ -455,4 +456,32 @@ model FiscalDocument {
 
   @@unique([saleId, kind])
   @@map("fiscal_documents")
+}
+
+model AddonInstallation {
+  id               String    @id @default(uuid())
+  tenantId         String
+  addonName        String
+  installedVersion String
+  state            String
+  error            String?   @db.NVarChar(Max)
+  installedAt      DateTime  @default(now())
+  activatedAt      DateTime?
+  updatedAt        DateTime  @updatedAt
+  tenant           Company   @relation(fields: [tenantId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([tenantId, addonName])
+  @@map("addon_installations")
+}
+
+model AddonMigrationRecord {
+  id            String   @id @default(uuid())
+  addonName     String
+  addonVersion  String
+  migrationName String
+  checksum      String
+  executedAt    DateTime @default(now())
+
+  @@unique([addonName, migrationName])
+  @@map("addon_migrations")
 }

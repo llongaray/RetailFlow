@@ -1,5 +1,6 @@
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
+import { loadLayeredConfig } from './infrastructure/config/layered-config';
 
 export function loadRootEnv() {
   const file = resolve(__dirname, '../../../.env');
@@ -17,4 +18,5 @@ export function loadRootEnv() {
   } catch {
     // O ambiente de teste ou CI pode injetar as variáveis sem arquivo.
   }
+  loadLayeredConfig();
 }

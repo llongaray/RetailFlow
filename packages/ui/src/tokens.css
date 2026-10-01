@@ -1,0 +1,31 @@
+:root {
+  color: var(--ink);
+  background: var(--canvas);
+  font-family: Manrope, sans-serif;
+  --ink: #1c2420;
+  --muted: #5d675f;
+  --canvas: #f3efe6;
+  --panel: #fffdf9;
+  --field: #ffffff;
+  --line: #e2d9cb;
+  --row-hover: #f7f1e6;
+  --sidebar: #14241c;
+  --sidebar-text: #d7e4dc;
+  --sidebar-active: #20362c;
+  --brand-muted: #9fb1a6;
+  --login-text: #edf4ef;
+  --accent: #0f766e;
+  --accent-ink: #f4fffc;
+  --gold: #a9782f;
+  --danger: #8d3030;
+  --ok: #1f7a4d;
+  --pill: #efe7d8;
+  --pill-ok: #e5f4ea;
+  --pill-danger: #f8e6e6;
+  --pill-pending: #f8efd8;
+  --overlay: rgba(20, 36, 28, 0.45);
+  --toast: #14241c;
+  --radius: 12px;
+  --shadow: 0 18px 50px color-mix(in srgb, var(--sidebar) 12%, transparent);
+  --space: 16px;
+}

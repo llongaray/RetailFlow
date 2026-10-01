@@ -2,6 +2,7 @@ import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { permissionsFor } from '../../domain/permissions';
+import { addonPermissionsFor } from '../../modules/addons/addon.grants';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { IS_PUBLIC, type RequestWithContext } from '../decorators';
 
@@ -38,7 +39,7 @@ export class JwtAuthGuard implements CanActivate {
       role: user.role,
       storeId: user.storeId,
       active: user.active,
-      permissions: permissionsFor(user.role),
+      permissions: [...permissionsFor(user.role), ...addonPermissionsFor(user.role)],
     };
     return true;
   }

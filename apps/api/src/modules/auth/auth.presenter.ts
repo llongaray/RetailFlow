@@ -1,4 +1,5 @@
 import { permissionsFor } from '../../domain/permissions';
+import { addonPermissionsFor } from '../addons/addon.grants';
 
 export function presentUser(user: {
   id: string;
@@ -17,6 +18,6 @@ export function presentUser(user: {
     storeId: user.storeId,
     storeName: user.store?.name ?? null,
     active: user.active,
-    permissions: permissionsFor(user.role),
+    permissions: [...permissionsFor(user.role), ...addonPermissionsFor(user.role)],
   };
 }

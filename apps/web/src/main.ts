@@ -3,9 +3,11 @@ import { MotionPlugin } from '@vueuse/motion';
 import { createPinia } from 'pinia';
 import { createApp } from 'vue';
 import App from './App.vue';
+import { loadAddonFrontends } from './extensions/load';
 import { router } from './router';
 import { queryClient } from './services/query';
 import 'dragula/dist/dragula.css';
 import './styles.css';
 
+loadAddonFrontends(router);
 createApp(App).use(createPinia()).use(router).use(MotionPlugin).use(VueQueryPlugin, { queryClient }).mount('#app');

@@ -5,6 +5,7 @@ import CatalogView from '../modules/products/CatalogView.vue';
 import CreditView from '../modules/credit/CreditView.vue';
 import CustomersView from '../modules/customers/CustomersView.vue';
 import DashboardView from '../modules/dashboard/DashboardView.vue';
+import AddonsView from '../modules/addons/AddonsView.vue';
 import IntegrationsView from '../modules/integrations/IntegrationsView.vue';
 import SaleDetailView from '../modules/sales/SaleDetailView.vue';
 import SaleWizardView from '../modules/sales/SaleWizardView.vue';
@@ -28,6 +29,7 @@ export const router = createRouter({
     { path: '/support', component: SupportView, meta: { permission: 'support.read' } },
     { path: '/audit', component: AuditView, meta: { permission: 'audit.read' } },
     { path: '/integrations', component: IntegrationsView, meta: { permission: 'audit.read' } },
+    { path: '/addons', component: AddonsView, meta: { permission: 'addon.manage' } },
   ],
 });
 

@@ -11,6 +11,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { AuditModule } from './infrastructure/audit/audit.module';
 import { PrismaModule } from './infrastructure/database/prisma.module';
 import { loadRootEnv } from './load-env';
+import { AddonsModule } from './modules/addons/addon.module';
 import { AuditLogModule } from './modules/audit/audit.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -43,6 +44,7 @@ loadRootEnv();
     PrismaModule,
     AuditModule,
     MetricsModule,
+    AddonsModule,
     NuvemshopModule,
     AuthModule,
     AdminModule,

@@ -26,6 +26,7 @@ export const PERMISSIONS = [
   'dashboard.read',
   'policy.update',
   'user.read',
+  'addon.manage',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -34,7 +35,7 @@ const ALL = [...PERMISSIONS];
 
 export const ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
   ADMIN: ALL,
-  GERENTE: ALL.filter((permission) => permission !== 'inventory.override' && permission !== 'policy.update'),
+  GERENTE: ALL.filter((permission) => permission !== 'inventory.override' && permission !== 'policy.update' && permission !== 'addon.manage'),
   ANALISTA_CREDITO: [
     'customer.read',
     'catalog.read',

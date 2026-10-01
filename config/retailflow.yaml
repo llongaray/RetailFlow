@@ -1,0 +1,17 @@
+server:
+  apiPort: 3000
+  webPort: 5173
+  adminPort: 5174
+  sitePort: 5175
+  webOrigin: http://localhost:5173
+  adminOrigin: http://localhost:5174
+  siteOrigin: http://localhost:5175
+integrations:
+  nuvemshop:
+    mode: demo
+  mercadopago:
+    mode: demo
+fiscal:
+  mode: demo
+site:
+  host: localhost

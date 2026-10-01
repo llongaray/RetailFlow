@@ -8,8 +8,10 @@ import { loadDashboard } from '../modules/dashboard/load';
 import { useSession } from '../stores/session';
 import { ROLE_LABEL } from '../utils/format';
 import NavIcon from '../components/NavIcon.vue';
+import { panelExtensions } from '../extensions/registry';
+import { api } from '../services/http';
 
-type Link = { to: string; label: string; permission?: string };
+type Link = { to: string; label: string; permission?: string; icon?: unknown; addon?: string };
 
 const session = useSession();
 const route = useRoute();
@@ -20,6 +22,7 @@ const drawer = ref(false);
 const userOpen = ref(false);
 const bellOpen = ref(false);
 const draft = ref(typeof route.query.q === 'string' && route.path === '/customers' ? route.query.q : '');
+const activeAddons = ref<string[] | null>(null);
 const portraitQuery = window.matchMedia('(max-width: 980px)');
 
 const loose: Link[] = [
@@ -46,6 +49,7 @@ const categories: { id: string; label: string; links: Link[] }[] = [
     links: [
       { to: '/audit', label: 'Auditoria', permission: 'audit.read' },
       { to: '/integrations', label: 'Integrações', permission: 'audit.read' },
+      { to: '/addons', label: 'Addons', permission: 'addon.manage' },
     ],
   },
 ];
@@ -54,12 +58,31 @@ function allowed(link: Link) {
   return !link.permission || session.can(link.permission);
 }
 
+async function loadActiveAddons() {
+  if (!session.can('addon.manage')) return;
+  try {
+    const rows = await api<{ name: string; state: string }[]>('/api/v1/addons');
+    activeAddons.value = rows.filter((row) => row.state === 'ACTIVE').map((row) => row.name);
+  } catch {
+    activeAddons.value = [];
+  }
+}
+
+watch(() => route.path, () => void loadActiveAddons(), { immediate: true });
+
 const visibleLoose = computed(() => loose.filter(allowed));
-const visibleCategories = computed(() =>
-  categories
-    .map((category) => ({ ...category, links: category.links.filter(allowed) }))
-    .filter((category) => category.links.length),
-);
+const visibleCategories = computed(() => {
+  const extra = panelExtensions.sidebar.filter((item) => {
+    if (item.addon && activeAddons.value && !activeAddons.value.includes(item.addon)) return false;
+    return allowed(item);
+  });
+  return categories
+    .map((category) => ({
+      ...category,
+      links: [...category.links, ...(category.id === 'gestao' ? extra : [])].filter(allowed),
+    }))
+    .filter((category) => category.links.length);
+});
 
 const menuOpen = computed(() => (portrait.value ? drawer.value : !collapsed.value));
 const iconOnly = computed(() => !portrait.value && collapsed.value);
@@ -143,7 +166,8 @@ onBeforeUnmount(() => portraitQuery.removeEventListener('change', syncPortrait))
           <section v-for="category in visibleCategories" :key="category.id" class="nav-group">
             <h2 v-if="!iconOnly">{{ category.label }}</h2>
             <RouterLink v-for="link in category.links" :key="link.to" :to="link.to" :title="link.label" :aria-label="link.label">
-              <NavIcon :name="link.to" />
+              <component :is="link.icon" v-if="link.icon" class="nav-icon" :size="18" :stroke-width="1.75" aria-hidden="true" />
+              <NavIcon v-else :name="link.to" />
               <span v-if="!iconOnly">{{ link.label }}</span>
             </RouterLink>
           </section>

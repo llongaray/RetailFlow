@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
+import ExtensionSlot from '../../components/ExtensionSlot.vue';
 import Modal from '../../components/Modal.vue';
 import { ApiError, api } from '../../services/http';
 import { useSession } from '../../stores/session';
@@ -101,6 +102,7 @@ onMounted(load);
     </div>
     <span class="pill" :data-status="sale.status" data-testid="sale-status">{{ STATUS_LABEL[sale.status] ?? sale.status }}</span>
   </header>
+  <ExtensionSlot name="sale.details.actions" />
   <section v-if="sale" class="grid">
     <article class="card">
       <p v-for="item in sale.items" :key="item.productId">{{ item.quantity }}× {{ item.name }} · {{ formatBRL(item.unitPrice) }}</p>

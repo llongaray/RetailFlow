@@ -1,0 +1,22 @@
+.rf-button, .rf-input, .rf-select, .rf-check { font: inherit; }
+.rf-button { border: 1px solid var(--line); background: var(--field); color: var(--ink); border-radius: 999px; padding: 10px 14px; cursor: pointer; }
+.rf-button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.rf-button.danger { background: var(--danger); color: var(--field); border-color: var(--danger); }
+.rf-field { display: flex; flex-direction: column; gap: 6px; font-size: 0.92rem; color: var(--ink); }
+.rf-input, .rf-select, .rf-area { border: 1px solid var(--line); border-radius: var(--radius); padding: 11px 12px; background: var(--field); color: var(--ink); }
+.rf-card, .rf-empty, .rf-tabs { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 16px; }
+.rf-table { width: 100%; border-collapse: collapse; }
+.rf-table th, .rf-table td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); }
+.rf-badge { display: inline-flex; border-radius: 999px; padding: 4px 8px; background: var(--pill); color: var(--ink); font-size: 0.75rem; font-weight: 700; }
+.rf-badge.ok { background: var(--pill-ok); color: var(--ok); }
+.rf-badge.danger { background: var(--pill-danger); color: var(--danger); }
+.rf-modal { position: fixed; inset: 0; z-index: 30; background: var(--overlay); display: grid; overflow: hidden; padding: 20px; }
+.rf-dialog { width: min(560px, 100%); max-height: calc(100dvh - 40px); margin: auto; overflow-y: auto; overscroll-behavior: contain; background: var(--panel); border-radius: 18px; padding: 22px; display: grid; gap: 12px; align-content: start; }
+.rf-drawer { position: fixed; top: 0; right: 0; height: 100vh; width: min(420px, 100%); background: var(--panel); box-shadow: var(--shadow); padding: 22px; z-index: 31; }
+.rf-toast { position: fixed; right: 16px; bottom: 16px; background: var(--toast); color: var(--login-text); border-radius: 12px; padding: 12px 14px; }
+.rf-page h1, .rf-section h2 { font-family: Fraunces, serif; margin: 0; }
+.rf-page p, .rf-muted { color: var(--muted); }
+.rf-row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.rf-grid { display: grid; gap: 12px; }
+.rf-tip { position: relative; }
+.rf-tip span { position: absolute; left: 0; top: 100%; background: var(--sidebar); color: var(--login-text); border-radius: 8px; padding: 6px 8px; white-space: nowrap; }

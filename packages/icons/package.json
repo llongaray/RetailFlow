@@ -1,0 +1,9 @@
+{
+  "name": "@retailflow/icons",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "peerDependencies": { "lucide-vue-next": "^1.0.0", "vue": "^3.5.0" },
+  "dependencies": { "lucide-vue-next": "^1.0.0" }
+}

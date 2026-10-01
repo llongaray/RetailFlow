@@ -12,6 +12,7 @@
     "dev:api": "npm run dev --workspace=@retailflow/api",
     "dev:web": "npm run dev --workspace=@retailflow/web",
     "dev:admin": "npm run dev --workspace=@retailflow/admin",
+    "dev:site": "npm run dev --workspace=@retailflow/site",
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "lint": "eslint .",

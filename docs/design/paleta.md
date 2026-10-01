@@ -2,7 +2,7 @@
 
 Os endereços do painel, do admin e da API estão em [Acessos](../../README.md#acessos).
 
-`base_dir`: `docs/design`. Esta página é a única lista de cores do RetailFlow. O painel usa os tokens abaixo em `apps/web/src/styles.css`. O admin repete a mesma lista em `apps/admin/src/styles.css`.
+`base_dir`: `docs/design`. Esta página é a única lista de cores do RetailFlow. O painel usa os tokens abaixo em `apps/web/src/styles.css`. O admin repete a mesma lista em `apps/admin/src/styles.css`. O pacote `@retailflow/ui` repete a mesma lista em `packages/ui/src/tokens.css`.
 
 | Token | Valor | Uso |
 | --- | --- | --- |

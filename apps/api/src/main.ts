@@ -23,7 +23,8 @@ async function bootstrap() {
   const config = app.get(ConfigService);
   const webOrigin = config.get<string>('WEB_ORIGIN') ?? 'http://localhost:5173';
   const adminOrigin = config.get<string>('ADMIN_ORIGIN') ?? 'http://localhost:5174';
-  app.enableCors({ origin: [webOrigin, adminOrigin] });
+  const siteOrigin = config.get<string>('SITE_ORIGIN') ?? 'http://localhost:5175';
+  app.enableCors({ origin: [webOrigin, adminOrigin, siteOrigin] });
   app.use((request: Request & { requestId?: string }, response: Response, next: NextFunction) => {
     request.requestId = randomUUID();
     response.setHeader('x-request-id', request.requestId);

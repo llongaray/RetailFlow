@@ -2,15 +2,16 @@
 
 Plataforma de varejo e crédito para uma rede de lojas. O vendedor localiza o cliente, consulta o estoque da filial e fecha a venda à vista ou abre uma proposta de financiamento. A análise segue alçada. Só depois da aprovação o sistema gera contrato, parcelas e baixa o estoque.
 
-O painel da v4 mostra mais do que a API já devolve: cartões, gráfico por loja, série das vendas listadas e resumo das listas. Não há meta, score nem comparação com período anterior.
+A v6 acrescenta o site público e os addons. O painel continua a operação da loja: cartões, gráfico por loja, série das vendas listadas e resumo das listas. Não há meta, score nem comparação com período anterior. O tutorial está em [docs/tutorial](docs/tutorial/README.md).
 
 ## Acessos
 
-Endereços do ambiente local, os mesmos do `.env.example`. Esta versão não publica domínio.
+Endereços do ambiente local. Portas, origens e modos ficam em `config/retailflow.yaml`. O `.env` guarda segredo. Variável de ambiente vence o YAML, e o YAML vence o padrão interno.
 
 | Acesso | Endereço | Quem usa |
 | --- | --- | --- |
 | Painel da loja | http://localhost:5173 | Papéis da loja. A busca do topo abre a lista de clientes. |
+| Site público | http://localhost:5175 | Landing sem login, quando o addon website está ativo para a empresa do host. |
 | Admin | http://localhost:5174 | Só `super@retailflow.local`. Essa conta não entra no painel. |
 | API | http://localhost:3000 | A raiz redireciona para a documentação. |
 | Documentação da API | http://localhost:3000/api/docs | Swagger. |
@@ -24,7 +25,9 @@ Endereços do ambiente local, os mesmos do `.env.example`. Esta versão não pub
 
 O parceiro não tem endereço próprio. A mesma API em `http://localhost:3000` atende o header `x-api-key` em catálogo, clientes e vendas.
 
-Com `NUVEMSHOP_MODE=demo`, `MERCADOPAGO_MODE=demo` e `FISCAL_MODE=demo` no `.env.example`, conectar a loja, cobrar e emitir nota não saem para a internet. Trocar esses valores liga o mesmo código na API correspondente.
+Com os modos `demo` em `config/retailflow.yaml`, conectar a loja, cobrar e emitir nota não saem para a internet. Uma variável de ambiente com o mesmo nome ainda substitui o YAML.
+
+A licença do RetailFlow é a GNU AGPLv3, no arquivo [LICENSE](LICENSE). O [ADR 0005](docs/adr/0005-agpl.md) registra a escolha. A pasta de addons está especificada em [addons/README.md](addons/README.md).
 
 ## Subir localmente
 
@@ -33,7 +36,7 @@ Com `NUVEMSHOP_MODE=demo`, `MERCADOPAGO_MODE=demo` e `FISCAL_MODE=demo` no `.env
 3. `npm install`
 4. `docker compose up -d`
 5. `npm run db:setup`
-6. `npm run dev:api` e, em outro terminal, `npm run dev:web`. O admin é `npm run dev:admin`.
+6. `npm run dev:api`, `npm run dev:web`, `npm run dev:admin` e `npm run dev:site`, cada um num terminal.
 7. Abra o [painel](http://localhost:5173). O [admin](http://localhost:5174) usa o superusuário do `.env`.
 
 Senha de todos os usuários de demonstração, inclusive o superusuário: `RetailFlow#2026`
@@ -76,7 +79,8 @@ Este README é o mapa. Cada página abaixo aprofunda um assunto.
 
 | Documento | O que responde |
 | --- | --- |
-| [Arquitetura](docs/architecture/overview.md) | Módulos da API, pastas do painel e do admin, e o que a v4 mudou na tela |
+| [Tutorial](docs/tutorial/README.md) | Como subir, entrar, vender, publicar o site e ler o motor de addons da v6 |
+| [Arquitetura](docs/architecture/overview.md) | Módulos da API, pastas do painel, do admin e do site |
 | [Regras de negócio](docs/business-rules/README.md) | RN001 a RN014 e o arquivo de domínio de cada uma |
 | [ADR 0001](docs/adr/0001-monolito-modular.md) | Por que um monólito NestJS, e por que o admin não é outro serviço |
 | [ADR 0002](docs/adr/0002-transacao-venda-estoque.md) | Venda e baixa de estoque na mesma transação |
@@ -94,13 +98,20 @@ Este README é o mapa. Cada página abaixo aprofunda um assunto.
 | `apps/api` | API NestJS, Prisma e testes de domínio |
 | `apps/web` | Painel Vue 3 |
 | `apps/admin` | Admin Vue, só o superusuário |
+| `apps/site` | Site público, sem o chrome do painel |
+| `addons` | Pacotes descobertos pelo manifesto. A especificação está em `addons/README.md` |
+| `config/retailflow.yaml` | Portas, origens e modos. Segredo fica no `.env` |
 | `packages/types` | Contratos compartilhados entre API e painel |
+| `packages/ui` | Componentes oficiais que um addon pode importar |
+| `packages/icons` | Ícones Lucide já usados no painel |
+| `packages/addon-sdk` | Tipos do `defineAddon` e do manifesto |
 | `docs/adr` | Decisões de arquitetura |
 | `docs/design` | Paleta e fontes |
 | `docs/architecture` | Visão técnica |
 | `docs/business-rules` | Regras RN001–RN014 |
-| `docs/images` | Capturas do login, do painel, dos clientes, do ponto de venda, da fila e do contrato |
-| `e2e` | Playwright local: venda financiada, menu, listas e admin |
+| `docs/images` | Capturas do login, da operação, dos addons e do site |
+| `docs/tutorial` | Tutorial da v6, do ambiente até o motor de addons |
+| `e2e` | Playwright local: venda financiada, menu, listas, admin e a landing do website |
 | `scripts` | Atalho do Prisma com o `.env` da raiz |
 | `.cursor/skills` | Modal, paleta, fontes e ícone no lugar de palavra |
 | `.github/workflows` | CI: lint, testes de domínio e build |
@@ -109,8 +120,8 @@ Na raiz também ficam `docker-compose.yml` (SQL Server e Redis), `package.json` 
 
 ```text
 Painel 5173 ─┐
-             ├─ REST / GraphQL → NestJS → SQL Server
-Admin 5174  ─┘                      ├── Redis / BullMQ
+Site   5175 ─┼─ REST / GraphQL → NestJS → SQL Server
+Admin  5174 ─┘                      ├── Redis / BullMQ
                                     └── adaptador Oracle (mock)
 ```
 
@@ -137,5 +148,11 @@ Os testes de integração e o Playwright precisam do SQL Server, da API e do pai
 ![Fila de crédito](docs/images/fila-credito.png)
 
 ![Contrato](docs/images/contrato.png)
+
+![Addons da empresa](docs/images/addons.png)
+
+![Edição do website](docs/images/website-admin.png)
+
+![Landing pública](docs/images/site.png)
 
 Sistema feito com auxilio de IA (Este é um projeto que demonstra as habilidade em vue e node.js a ia foi usada apenas para agilizar o processo).

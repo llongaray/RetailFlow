@@ -1,0 +1,9 @@
+{
+  "name": "@retailflow/ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "peerDependencies": { "vue": "^3.5.0" },
+  "dependencies": { "vue": "^3.5.13" }
+}

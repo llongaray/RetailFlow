@@ -10,6 +10,7 @@ import { api } from '../../services/http';
 import { useSession } from '../../stores/session';
 import type { Sale } from '../../types';
 import { formatBRL, formatDate } from '../../utils/format';
+import ExtensionSlot from '../../components/ExtensionSlot.vue';
 import { loadDashboard } from './load';
 
 use([CanvasRenderer, BarChart, LineChart, GridComponent, TooltipComponent]);
@@ -71,6 +72,7 @@ const line = computed(() => ({
       <p>Consolidado da rede ou da filial. Fonte: {{ dash.data.value?.source ?? '…' }}.</p>
     </div>
   </header>
+  <ExtensionSlot name="dashboard.widgets" />
   <section v-if="data" class="grid kpis">
     <article class="card kpi"><span>Vendas concluídas</span><strong data-testid="kpi-sales">{{ data.salesCount }}</strong></article>
     <article class="card kpi"><span>Volume</span><strong>{{ formatBRL(data.salesTotal) }}</strong></article>
